@@ -1,5 +1,5 @@
 """
-Professional Pregnancy AI Assistant (Graduation Project - **v10 - Bug Fixes**)
+Professional Pregnancy AI Assistant (Graduation Project - **v10.1 - PDF Warning Fix**)
 Features:
 - **Premium Front-End:** Dashboard layout, interactive Plotly charts, icons, refined CSS.
 - **Enhanced AI Logic:** Includes detailed patient history, AI "thinks aloud", assesses urgency, intelligently parses OCR, considers medications.
@@ -8,10 +8,7 @@ Features:
 - **Multi-Tool Interface:** Assessment, Weekly Guide, FMC.
 - **Advanced Medical Handling:** Pregnancy weight gain, BP, Hypoglycemia.
 - **Contextual AI:** Incorporates history, expanded risk factors, medications.
-- **BUG FIX:** **Fixed `StreamlitValueBelowMinError`** by clamping default values from history to min/max range.
-- **BUG FIX:** **Fixed critical data saving bug** (using explicit `labs` dict).
-- **BUG FIX:** **Fixed PDF generation data passing** using session state.
-- **UI FIX:** Replaced history dataframe with a cleaner comparison table.
+- **BUG FIX:** **Fixed `DeprecationWarning`s** from FPDF library by using modern `new_x` and `new_y` parameters.
 - Saves data instantly to Google Sheets.
 """
 # --------------------------- CONFIGURE HERE ---------------------------
@@ -39,6 +36,7 @@ import platform # For OS detection
 FPDF_EXISTS = False
 try:
     from fpdf import FPDF
+    from fpdf.enums import XPos, YPos # **FIX**: Import new enums
     import arabic_reshaper
     from bidi.algorithm import get_display
     ARABIC_FONT_PATH = "DejaVuSans.ttf"
@@ -84,7 +82,7 @@ defaults = {
     'analysis_complete': False, 'patient_history_df': pd.DataFrame(), 'fmc_count': 0,
     'fmc_start_time': None, 'uploaded_image_key': 0, 'form_data': {},
     'last_uploaded_id': None, 'ai_extracted_labs': {}, 'last_patient_info': {}, 'last_labs': {},
-    'assessment_step': 0 # **<-- أضف هذا السطر هنا**
+    'assessment_step': 0 
 }
 for key, value in defaults.items():
     st.session_state.setdefault(key, value)
@@ -314,7 +312,7 @@ def ai_generate_final_report(patient_info, labs, history_df, symptoms_text, ocr_
                     if not isinstance(extracted_labs, dict): extracted_labs = {}
                 else: extracted_labs = {}
             except json.JSONDecodeError: extracted_labs = {}
-
+        
         if report_part: report_text = report_part.strip()
         elif not report_part and not json_part and full_response_text: report_text = full_response_text
 
@@ -341,12 +339,12 @@ def save_record_to_gsheet(worksheet, record: dict):
                  except (ValueError, TypeError): final_val = "N/A"
              record_to_save[lab_header] = final_val if final_val is not None and final_val != "" else "N/A"
 
-        record_to_save['urgency_assessment'] = record.get('urgency', 'N/A')
+        record_to_save['urgency_assessment'] = record.get('urgency', 'N/Player')
         record_to_save['record_id'] = str(uuid.uuid4())
 
         df = pd.DataFrame([record_to_save], columns=GSHEET_ALL_HEADERS)
         worksheet.append_rows(df.astype(str).fillna("N/A").values.tolist(), value_input_option='USER_ENTERED')
-
+        
         st.success("💾 تم حفظ السجل بنجاح في Google Sheets.")
         return True
     except APIError as e: st.error(f"❌ فشل الحفظ (API Error): {e}"); return False
@@ -370,17 +368,17 @@ def create_pdf_bytes(report_text, patient_info, labs):
     if not FPDF_EXISTS or not os.path.exists(ARABIC_FONT_PATH):
         st.error(f"خطأ PDF: المكتبات أو ملف الخط '{ARABIC_FONT_PATH}' مفقود.")
         return None
-
+    
     pdf = FPDF()
     pdf.add_page()
     pdf.add_font('DejaVu', '', ARABIC_FONT_PATH, uni=True)
-
-    pdf.set_font('DejaVu', '', 16)
+    
+    pdf.set_font('DejaVu', '', 16) 
     title = f"تقرير المساعد الذكي للمريضة: {patient_info.get('name', 'N/A')}"
     reshaped_title = arabic_reshaper.reshape(title); bidi_title = get_display(reshaped_title)
     pdf.cell(0, 10, bidi_title, ln=True, align='C')
     pdf.ln(5)
-
+    
     pdf.set_font('DejaVu', '', 11)
     info_text = f"المعرف: {patient_info.get('id', 'N/A')} | العمر: {patient_info.get('age', 'N/A')} | أسبوع الحمل: {patient_info.get('week', 'N/A')}"
     reshaped_info = arabic_reshaper.reshape(str(info_text)); bidi_info = get_display(reshaped_info)
@@ -396,7 +394,7 @@ def create_pdf_bytes(report_text, patient_info, labs):
             pdf.multi_cell(0, 7, bidi_line, align='R')
         else:
             pdf.ln(7) # Add a blank line
-
+        
     return pdf.output(dest='S').encode('latin-1')
 
 # --------------------------- UI STYLING ---------------------------
@@ -467,7 +465,6 @@ st.markdown("""
         .stMetric .st-ae { font-size: 1.8em; color: #880E4F !important; font-weight: 700;} /* Reduced font size for mobile */
         .stProgress > div > div { background-image: linear-gradient(45deg, #FF69B4, #D81B60); border-radius: 10px; }
         
-        /* Sidebar Enhancements */
         [data-testid="stSidebar"] { background-color: rgba(255, 240, 245, 0.9); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 105, 180, 0.2); box-shadow: 5px 0px 20px rgba(255, 105, 180, 0.1);}
         [data-testid="stSidebar"] img { display: block; margin-left: auto; margin-right: auto; margin-bottom: 0.5rem; }
         [data-testid="stSidebar"] h1 { color: #D81B60 !important; margin-top: -15px; text-align: center; font-size: 1.8em;}
@@ -504,14 +501,14 @@ def show_main_menu():
     st.image(SVG_DATA_URI, width=420)
     st.title("مساعد الحمل الذكي")
     st.markdown("---")
-
+    
     st.subheader("أهلاً بكِ في مشروع التخرج الخاص بنا!")
     st.markdown("يرجى اختيار إحدى الخدمات للبدء:")
 
     st.markdown("") # Add space
 
     col1, col2, col3 = st.columns(3)
-
+    
     with col1:
         if st.button("👩‍⚕️ التقييم الشامل", use_container_width=True):
             st.session_state.page = "التقييم الشامل"
@@ -528,14 +525,14 @@ def show_main_menu():
 
 def assessment_wizard():
     """Handles the multi-step assessment workflow."""
-
+    
     worksheet = get_gsheet_connection()
     if worksheet is None:
         st.error("❌ فشل الاتصال بقاعدة البيانات. يرجى التحقق من إعدادات Google Sheets.")
         if st.button("🏠 العودة للقائمة الرئيسية"):
              st.session_state.page = "Menu"
              st.rerun()
-        st.stop()
+        st.stop() 
 
     # Navigation Buttons
     col_nav1, col_nav2 = st.columns([1, 1])
@@ -553,25 +550,25 @@ def assessment_wizard():
                 del st.session_state[key]
         st.session_state.page = "Menu"
         st.rerun()
-
+    
     # Define steps
     steps = ['الرقم التعريفي', 'المعلومات الأساسية', 'القياسات وعوامل الخطورة', 'الأعراض الحالية', 'التحاليل ورفع الصور', 'التقرير النهائي']
     current_step_index = st.session_state.assessment_step
-
+    
     # Safety check for step index
     if current_step_index >= len(steps):
         st.session_state.assessment_step = 0 # Reset if index is out of bounds
         st.rerun()
-
+        
     st.subheader(f"الخطوة {current_step_index + 1} من {len(steps)}: {steps[current_step_index]}")
-    st.progress((current_step_index + 1) / len(steps))
+    st.progress((current_step_index + 1) / len(steps)) 
     st.markdown("---")
 
     # --- STEP 0: PATIENT ID ---
     if st.session_state.assessment_step == 0:
         st.header("💖 أدخلي الرقم التعريفي الخاص بكِ")
         patient_id = st.text_input("الرقم التعريفي (Patient ID)", key="patient_id_input").strip()
-
+        
         if st.button("التالي"):
             if not patient_id:
                 st.error("يرجى إدخال الرقم التعريفي للمتابعة.")
@@ -581,7 +578,7 @@ def assessment_wizard():
                     st.session_state.patient_history_df = get_patient_history_df(worksheet, patient_id)
                 st.session_state.assessment_step = 1
                 st.rerun()
-
+    
     # --- STEP 1: PATIENT INFO (after ID is entered) ---
     elif st.session_state.assessment_step == 1:
         st.header("👤 1. المعلومات الأساسية والتاريخ المرضي")
@@ -596,16 +593,16 @@ def assessment_wizard():
 
         with st.form("step1_form"):
             col_info1, col_info2 = st.columns(2);
-            with col_info1:
+            with col_info1: 
                 patient_name_input = st.text_input("✨ **اسمكِ بالكامل**", value=patient_name if patient_name else "")
                 age = st.number_input("**العمر**", 15, 60, value= int(safe_get(last_record, 'age', 25)), format="%d")
-            with col_info2:
+            with col_info2: 
                  gravida = st.number_input("الحمل رقم (G)", 0, 20, value=int(safe_get(last_record, 'gravida', 1)))
                  para = st.number_input("الولادات السابقة (P)", 0, 20, value=int(safe_get(last_record, 'para', 0)))
                  abortion = st.number_input("الإجهاض السابق (A)", 0, 20, value=int(safe_get(last_record, 'abortion', 0)))
             past_medical_history = st.text_area("🩺 **التاريخ الطبي السابق**", height=50, value= safe_get(last_record, 'past_medical_history', ''))
             current_medications = st.text_area("💊 **الأدوية الحالية**", height=50)
-
+            
             if st.form_submit_button("التالي ⬅️"):
                 if not patient_name_input or not age:
                     st.error("يرجى إدخال الاسم والعمر.")
@@ -624,7 +621,7 @@ def assessment_wizard():
     elif st.session_state.assessment_step == 2:
         st.header("📏 2. القياسات وعوامل الخطورة")
         last_record = st.session_state.patient_history_df.iloc[-1].to_dict() if not st.session_state.patient_history_df.empty else {}
-
+        
         def get_default_value(key, default, min_val, max_val, is_float=False):
             val = safe_get(last_record, key, default)
             try: num_val = float(val) if is_float else int(val); return max(min_val, min(max_val, num_val))
@@ -638,7 +635,7 @@ def assessment_wizard():
                 height_cm = col_meas2.number_input("**الطول (سم)**", 100, 250, placeholder="165", value=get_default_value('height_cm', 160, 100, 250))
                 pre_preg_weight = col_meas3.number_input("**الوزن قبل الحمل (كجم)**", 30.0, 250.0, placeholder="65.0", value=get_default_value('pre_pregnancy_weight_kg', 60.0, 30.0, 250.0, is_float=True), format="%.1f")
                 current_weight = col_meas4.number_input("**الوزن الحالي (كجم)**", 30.0, 250.0, placeholder="75.0", format="%.1f")
-
+            
             with st.container(border=True):
                 st.subheader("عوامل الخطورة (إن وجدت)")
                 selected_risk_factors = [rf for rf in RISK_FACTORS_LIST if st.checkbox(rf, key=f"rf_{rf}")]
@@ -660,7 +657,7 @@ def assessment_wizard():
         st.header("❓ 3. الأعراض الحالية")
         with st.form("step3_form"):
             symptoms_text = st.text_area("✍️ **صفي ما تشعرين به بالتفصيل...**", height=150)
-
+            
             if st.form_submit_button("التالي ⬅️"):
                 if not symptoms_text:
                     st.error("يرجى وصف الأعراض للمتابعة.")
@@ -685,7 +682,7 @@ def assessment_wizard():
                  lab_cols4 = st.columns(3); alt = lab_cols4[0].number_input("ALT (U/L)", value=None, placeholder="20"); ast = lab_cols4[1].number_input("AST (U/L)", value=None, placeholder="20"); creatinine = lab_cols4[2].number_input("Creatinine (mg/dL)", value=None, placeholder="0.7", format="%.1f")
                  st.markdown("**تحليل البول:**")
                  lab_cols5 = st.columns(2); urine_protein = lab_cols5[0].selectbox("بروتين البول", ["Negative", "Trace", "+", "++", "+++", "++++"], index=0); urine_ketones = lab_cols5[1].selectbox("كيتون البول", ["Negative", "Trace", "Small", "Moderate", "Large"], index=0)
-
+            
             uploaded_image = st.file_uploader("📂 أو ارفعي صورة تقرير التحاليل", type=['jpg', 'jpeg', 'png'], key=f'uploader_{st.session_state.uploaded_image_key}')
             submitted = st.form_submit_button("💖 تحليل وإنشاء التقرير", type="primary", use_container_width=True)
 
@@ -693,11 +690,11 @@ def assessment_wizard():
              with st.spinner("🔬 قراءة الصورة..."):
                  st.session_state.ocr_results = ocr_with_tesseract(uploaded_image.getvalue())
                  st.session_state.last_uploaded_id = uploaded_image.file_id
-                 st.rerun()
+                 st.rerun() 
         elif not uploaded_image:
              st.session_state.ocr_results = ""
              st.session_state.last_uploaded_id = None
-
+        
         if st.session_state.ocr_results:
             st.text_area("النص المستخرج (للمراجعة):", value=st.session_state.ocr_results, height=150, key="ocr_display_after_form")
 
@@ -706,12 +703,12 @@ def assessment_wizard():
                  st.error("❌ قيمة ضغط الدم الانقباضي يجب أن تكون أعلى من الانبساطي.")
             else:
                 ocr_text_for_analysis = st.session_state.ocr_results
-
+                
                 with st.status("👩‍⚕️ يقوم المساعد الذكي بتحليل حالتكِ...", expanded=True) as status:
                     status.write("📊 تجميع البيانات...")
                     pre_preg_bmi, pre_preg_bmi_cat = calculate_bmi(st.session_state.form_data['pre_pregnancy_weight_kg'], st.session_state.form_data['height_cm'])
                     weight_gain = round(st.session_state.form_data['current_weight'] - st.session_state.form_data['pre_pregnancy_weight_kg'], 1)
-
+                    
                     patient_info = {
                         "name": st.session_state.form_data['patient_name'], "age": st.session_state.form_data['age'], "week": st.session_state.form_data['gestational_week'],
                         "gravida": st.session_state.form_data['gravida'], "para": st.session_state.form_data['para'], "abortion": st.session_state.form_data['abortion'],
@@ -720,8 +717,8 @@ def assessment_wizard():
                         "weight_gain": weight_gain, "pre_preg_bmi": pre_preg_bmi, "pre_pregnancy_bmi_category": pre_preg_bmi_cat,
                         "risk_factors": st.session_state.form_data['selected_risk_factors']
                     }
-                    labs = locals()
-
+                    labs = locals() 
+                    
                     st.session_state.last_patient_info = patient_info
                     st.session_state.last_labs = {k: labs.get(k) for k in GSHEET_LAB_HEADERS}
 
@@ -739,7 +736,7 @@ def assessment_wizard():
                         "record_id": str(uuid.uuid4()),
                         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "patient_id": st.session_state.patient_id,
-                        **patient_info,
+                        **patient_info, 
                         "risk_factors": ", ".join(patient_info['risk_factors']) or "None",
                         "symptoms_text": st.session_state.form_data['symptoms_text'],
                         **{h: ai_extracted_labs.get(h, labs.get(h, "N/A")) for h in GSHEET_LAB_HEADERS},
@@ -747,7 +744,7 @@ def assessment_wizard():
                         "final_ai_report": report_text or "N/A",
                         "urgency_assessment": urgency
                     }
-
+                    
                     save_successful = save_record_to_gsheet(worksheet, full_record)
                     if save_successful:
                          status.update(label="اكتمل التحليل!", state="complete")
@@ -760,19 +757,19 @@ def assessment_wizard():
     elif st.session_state.assessment_step == 5:
         st.header("💌 تقريركِ الشامل من المساعد الذكي")
         st.balloons()
-
+        
         urgency_level = st.session_state.get('urgency', 'غير محدد')
         urgency_color = get_urgency_color(urgency_level)
         if urgency_color == "error": st.error(f"**🚨 تقييم الخطورة: {urgency_level}**", icon="🚨")
         elif urgency_color == "warning": st.warning(f"**⚠️ تقييم الخطورة: {urgency_level}**", icon="⚠️")
         else: st.success(f"**✅ تقييم الخطورة: {urgency_level}**", icon="✅")
-
+        
         with st.container(border=True):
              st.markdown(st.session_state.final_report)
-
+        
         if FPDF_EXISTS and os.path.exists(ARABIC_FONT_PATH):
             try:
-                pdf_bytes = create_pdf_bytes(st.session_state.final_report, st.session_state.last_patient_info, st.session_state.last_labs)
+                pdf_bytes = create_pdf_bytes(st.session_state.final_report, st.session_state.last_patient_info, st.session_state.last_labs) 
                 if pdf_bytes:
                     st.download_button(
                         label="⬇️ تحميل التقرير (PDF)", data=pdf_bytes,
@@ -780,7 +777,7 @@ def assessment_wizard():
                         mime="application/pdf"
                     )
             except Exception as e: st.warning(f"لم نتمكن من إنشاء ملف PDF: {e}")
-
+        
         # **UI FIX**: Button now returns to the Main Menu and clears state
         if st.button("🔄 العودة للقائمة الرئيسية"):
             keys_to_clear = list(st.session_state.keys())
@@ -797,7 +794,7 @@ def show_weekly_guide():
     if st.button("⬅️ العودة للقائمة الرئيسية"):
         st.session_state.page = "Menu"
         st.rerun()
-
+    
     default_week = 8
     last_record_dict = st.session_state.patient_history_df.iloc[-1].to_dict() if not st.session_state.patient_history_df.empty else {}
     hist_week_val = safe_get(last_record_dict, 'gestational_week', default_week)
@@ -819,7 +816,7 @@ def show_fmc_counter():
     if st.button("⬅️ العودة للقائمة الرئيسية"):
         st.session_state.page = "Menu"
         st.rerun()
-
+        
     st.markdown("""
     **متى وكيف؟**
     * 🗓️ يُنصح بالبدء بالمراقبة المنتظمة حوالي **الأسبوع 28**.
@@ -856,5 +853,4 @@ elif st.session_state.page == "عداد حركة الجنين":
 else: # Default to Main Menu
     st.session_state.page = "Menu"
     show_main_menu()
-
 
