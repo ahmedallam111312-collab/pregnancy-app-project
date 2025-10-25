@@ -1,7 +1,7 @@
 """
-Professional Pregnancy AI Assistant (Graduation Project - **v12 - Deployment Ready**)
+Professional Pregnancy AI Assistant (Graduation Project - **v13 - Multi-Step Wizard UI**)
 Features:
-- **Premium Front-End:** **Fully mobile-responsive**, **new pink color scheme**, dashboard layout, interactive Plotly charts, SVG logo, refined CSS.
+- **Premium Front-End:** **Multi-Step Wizard interface** for mobile-friendly navigation.
 - **Enhanced AI Logic:** Includes detailed patient history, AI "thinks aloud", assesses urgency, intelligently parses OCR, considers medications.
 - **Expanded Knowledge Base & Weekly Guide.**
 - **Local OCR + AI Cleaning.**
@@ -41,11 +41,8 @@ try:
     if os.path.exists(ARABIC_FONT_PATH):
         FPDF_EXISTS = True
     else:
-        # Only show local warning
-        if platform.system() == "Windows":
-            st.warning(f"ملف الخط '{ARABIC_FONT_PATH}' مفقود. لن تعمل ميزة PDF.")
-except ImportError:
-    st.warning("مكتبات PDF (fpdf2, arabic-reshaper, python-bidi) غير مثبتة. لن تعمل ميزة تحميل PDF.")
+        if platform.system() == "Windows": st.warning(f"ملف الخط '{ARABIC_FONT_PATH}' مفقود. لن تعمل ميزة PDF.")
+except ImportError: st.warning("مكتبات PDF (fpdf2, arabic-reshaper, python-bidi) غير مثبتة.")
 # --------------------------------
 
 # --- Tesseract Configuration ---
@@ -55,14 +52,12 @@ try:
         pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD_PATH
         TESSERACT_AVAILABLE = True
     elif platform.system() != "Windows":
-        # Assume it's installed on Streamlit Cloud
         TESSERACT_AVAILABLE = True
     else:
         st.error(f"لم يتم العثور على Tesseract في المسار: {TESSERACT_CMD_PATH}.")
         TESSERACT_AVAILABLE = False
 except ImportError:
-    st.error("مكتبة 'pytesseract' غير مثبتة.")
-    TESSERACT_AVAILABLE = False
+    st.error("مكتبة 'pytesseract' غير مثبتة."); TESSERACT_AVAILABLE = False
 # --------------------------------
 
 # --- AI Configuration ---
@@ -80,16 +75,17 @@ st.set_page_config(page_title="مساعد الحمل الذكي", layout="wide",
 
 # --- Initialize Session State ---
 defaults = {
-    'page': 'التقييم الشامل', 'patient_id': "", 'ocr_results': "", 'final_report': None, 'urgency': 'غير محدد',
+    'page': 'التقييم الشامل', 'assessment_step': 0, # 0=Start, 1=Info, 2=Measurements, 3=Symptoms, 4=Labs, 5=Report
+    'patient_id': "", 'ocr_results': "", 'final_report': None, 'urgency': 'غير محدد',
     'analysis_complete': False, 'patient_history_df': pd.DataFrame(), 'fmc_count': 0,
-    'fmc_start_time': None, 'uploaded_image_key': 0, 'form_data': {},
+    'fmc_start_time': None, 'uploaded_image_key': 0, 'form_data': {}, # Central dict for form data
     'last_uploaded_id': None, 'ai_extracted_labs': {}, 'last_patient_info': {}, 'last_labs': {}
 }
 for key, value in defaults.items():
     st.session_state.setdefault(key, value)
 # --------------------------------
 
-# --- SVG Logo (More Pink) ---
+# --- SVG Logo ---
 SVG_LOGO = r'''
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="160" viewBox="0 0 420 160">
   <defs>
@@ -175,52 +171,34 @@ def get_gsheet_connection():
     except Exception as e: st.error(f"❌ فشل الاتصال بـ Google Sheets: {e}"); return None
 
 def get_patient_history_df(worksheet, patient_id_input):
-    """
-    Robustly fetches patient history using get_all_values() for reliability.
-    """
+    """Robustly fetches patient history."""
     try:
         if worksheet is None: return pd.DataFrame()
         all_values = worksheet.get_all_values()
         if len(all_values) <= 1: return pd.DataFrame()
-
-        headers_raw = all_values[0]
-        headers = []
+        headers_raw = all_values[0]; headers = []
         for h in headers_raw:
             cleaned_h = h.strip().lower()
             if cleaned_h: headers.append(cleaned_h)
             else: break
-        
-        num_cols = len(headers)
-        data = [row[:num_cols] for row in all_values[1:]]
-        
+        num_cols = len(headers); data = [row[:num_cols] for row in all_values[1:]]
         df = pd.DataFrame(data, columns=headers)
-        
         required_cols = ['patient_id', 'timestamp']
         if not all(col in df.columns for col in required_cols):
              if 'patient_id' not in df.columns: return pd.DataFrame()
-
         df = df.replace('', pd.NA)
         search_id = str(patient_id_input).strip().lower()
-        
         if 'patient_id' not in df.columns: return pd.DataFrame()
-            
         df['patient_id_str'] = df['patient_id'].astype(str).str.strip().str.lower()
         patient_df = df[df['patient_id_str'] == search_id].copy().drop(columns=['patient_id_str'])
-        
         if patient_df.empty: return pd.DataFrame()
-
         if 'timestamp' in patient_df.columns:
             patient_df['timestamp'] = pd.to_datetime(patient_df['timestamp'], errors='coerce')
             patient_df.dropna(subset=['timestamp'], inplace=True)
         else: return patient_df
-
-        numeric_cols = ['age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm', 
-                        'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg', 
-                        'pre_pregnancy_bmi', 'systolic_bp', 'diastolic_bp', 'fasting_glucose', 
-                        'ogtt_1h', 'ogtt_2h', 'hba1c', 'hb', 'platelets', 'alt', 'ast', 'creatinine', 'bnp']
+        numeric_cols = ['age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm', 'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg', 'pre_pregnancy_bmi', 'systolic_bp', 'diastolic_bp', 'fasting_glucose', 'ogtt_1h', 'ogtt_2h', 'hba1c', 'hb', 'platelets', 'alt', 'ast', 'creatinine', 'bnp']
         for col in numeric_cols:
             if col in patient_df.columns: patient_df[col] = pd.to_numeric(patient_df[col], errors='coerce')
-        
         return patient_df.sort_values(by='timestamp', ascending=True)
     except Exception as e: print(f"Error fetching/processing history: {e}"); return pd.DataFrame()
 
