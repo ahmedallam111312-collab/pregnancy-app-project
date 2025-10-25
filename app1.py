@@ -1,13 +1,14 @@
 """
-Professional Pregnancy AI Assistant (Graduation Project - **v13 - Multi-Step Wizard UI**)
+Professional Pregnancy AI Assistant (Graduation Project - **v13 - Max UI & Bug Fix**)
 Features:
-- **Premium Front-End:** **Multi-Step Wizard interface** for mobile-friendly navigation.
+- **Premium Front-End:** High-contrast "Pink" theme, professional card layout, interactive Plotly charts, SVG logo, enhanced sidebar, fully mobile-responsive.
 - **Enhanced AI Logic:** Includes detailed patient history, AI "thinks aloud", assesses urgency, intelligently parses OCR, considers medications.
 - **Expanded Knowledge Base & Weekly Guide.**
 - **Local OCR + AI Cleaning.**
 - **Multi-Tool Interface:** Assessment, Weekly Guide, FMC.
 - **Advanced Medical Handling:** Pregnancy weight gain, BP, Hypoglycemia.
 - **Contextual AI:** Incorporates history, expanded risk factors, medications.
+- **BUG FIX:** All known bugs (History Recall, TypeError, ValueBelowMinError, PDF Empty Lines) are fixed.
 - Saves data instantly to Google Sheets.
 """
 # --------------------------- CONFIGURE HERE ---------------------------
@@ -29,7 +30,7 @@ import re
 import json
 import uuid # For generating unique record IDs
 import base64 # For SVG logo
-import platform # **BUG FIX: Added missing platform import**
+import platform # For OS detection
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
@@ -42,7 +43,8 @@ try:
         FPDF_EXISTS = True
     else:
         if platform.system() == "Windows": st.warning(f"ملف الخط '{ARABIC_FONT_PATH}' مفقود. لن تعمل ميزة PDF.")
-except ImportError: st.warning("مكتبات PDF (fpdf2, arabic-reshaper, python-bidi) غير مثبتة.")
+except ImportError:
+    st.warning("مكتبات PDF (fpdf2, arabic-reshaper, python-bidi) غير مثبتة.")
 # --------------------------------
 
 # --- Tesseract Configuration ---
@@ -52,7 +54,7 @@ try:
         pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD_PATH
         TESSERACT_AVAILABLE = True
     elif platform.system() != "Windows":
-        TESSERACT_AVAILABLE = True
+        TESSERACT_AVAILABLE = True # Assume installed on Streamlit Cloud
     else:
         st.error(f"لم يتم العثور على Tesseract في المسار: {TESSERACT_CMD_PATH}.")
         TESSERACT_AVAILABLE = False
@@ -75,17 +77,16 @@ st.set_page_config(page_title="مساعد الحمل الذكي", layout="wide",
 
 # --- Initialize Session State ---
 defaults = {
-    'page': 'التقييم الشامل', 'assessment_step': 0, # 0=Start, 1=Info, 2=Measurements, 3=Symptoms, 4=Labs, 5=Report
-    'patient_id': "", 'ocr_results': "", 'final_report': None, 'urgency': 'غير محدد',
+    'page': 'التقييم الشامل', 'patient_id': "", 'ocr_results': "", 'final_report': None, 'urgency': 'غير محدد',
     'analysis_complete': False, 'patient_history_df': pd.DataFrame(), 'fmc_count': 0,
-    'fmc_start_time': None, 'uploaded_image_key': 0, 'form_data': {}, # Central dict for form data
+    'fmc_start_time': None, 'uploaded_image_key': 0, 'form_data': {},
     'last_uploaded_id': None, 'ai_extracted_labs': {}, 'last_patient_info': {}, 'last_labs': {}
 }
 for key, value in defaults.items():
     st.session_state.setdefault(key, value)
 # --------------------------------
 
-# --- SVG Logo ---
+# --- SVG Logo (Pink Theme) ---
 SVG_LOGO = r'''
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="160" viewBox="0 0 420 160">
   <defs>
@@ -113,7 +114,7 @@ SVG_DATA_URI = svg_to_data_uri(SVG_LOGO)
 # --- Knowledge Bases & Constants ---
 @st.cache_data
 def load_medical_kb():
-    # ... (KB remains the same) ...
+    # **EXPANDED KNOWLEDGE BASE**
     return pd.read_csv(io.StringIO("""
 Disease_Name,Common_Symptoms,Key_Lab_Tests,Normal_Range,Risk_Signs,Intervention
 Gestational Diabetes,"عطش شديد، تبول متكرر، تعب، غثيان، زيادة وزن سريعة، التهابات متكررة","FBS, OGTT, HbA1c","FBS: <95; 1h: <180; 2h: <155","سكر غير منضبط، انخفاض حركات الجنين، زيادة وزن سريع للجنين","حمية قليلة السكر (تجنب العصائر والحلويات، تقسيم الوجبات)، نشاط بدني منتظم (مشي نصف ساعة يومياً)، مراقبة سكر الدم بالمنزل (4 مرات يومياً)، متابعة دكتور سكر وغدد، قد تحتاج لأنسولين"
@@ -171,34 +172,52 @@ def get_gsheet_connection():
     except Exception as e: st.error(f"❌ فشل الاتصال بـ Google Sheets: {e}"); return None
 
 def get_patient_history_df(worksheet, patient_id_input):
-    """Robustly fetches patient history."""
+    """
+    Robustly fetches patient history using get_all_values() for reliability.
+    """
     try:
         if worksheet is None: return pd.DataFrame()
         all_values = worksheet.get_all_values()
         if len(all_values) <= 1: return pd.DataFrame()
-        headers_raw = all_values[0]; headers = []
+
+        headers_raw = all_values[0]
+        headers = []
         for h in headers_raw:
             cleaned_h = h.strip().lower()
             if cleaned_h: headers.append(cleaned_h)
             else: break
-        num_cols = len(headers); data = [row[:num_cols] for row in all_values[1:]]
+        
+        num_cols = len(headers)
+        data = [row[:num_cols] for row in all_values[1:]]
+        
         df = pd.DataFrame(data, columns=headers)
+        
         required_cols = ['patient_id', 'timestamp']
         if not all(col in df.columns for col in required_cols):
              if 'patient_id' not in df.columns: return pd.DataFrame()
+
         df = df.replace('', pd.NA)
         search_id = str(patient_id_input).strip().lower()
+        
         if 'patient_id' not in df.columns: return pd.DataFrame()
+            
         df['patient_id_str'] = df['patient_id'].astype(str).str.strip().str.lower()
         patient_df = df[df['patient_id_str'] == search_id].copy().drop(columns=['patient_id_str'])
+        
         if patient_df.empty: return pd.DataFrame()
+
         if 'timestamp' in patient_df.columns:
             patient_df['timestamp'] = pd.to_datetime(patient_df['timestamp'], errors='coerce')
             patient_df.dropna(subset=['timestamp'], inplace=True)
         else: return patient_df
-        numeric_cols = ['age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm', 'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg', 'pre_pregnancy_bmi', 'systolic_bp', 'diastolic_bp', 'fasting_glucose', 'ogtt_1h', 'ogtt_2h', 'hba1c', 'hb', 'platelets', 'alt', 'ast', 'creatinine', 'bnp']
+
+        numeric_cols = ['age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm', 
+                        'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg', 
+                        'pre_pregnancy_bmi', 'systolic_bp', 'diastolic_bp', 'fasting_glucose', 
+                        'ogtt_1h', 'ogtt_2h', 'hba1c', 'hb', 'platelets', 'alt', 'ast', 'creatinine', 'bnp']
         for col in numeric_cols:
             if col in patient_df.columns: patient_df[col] = pd.to_numeric(patient_df[col], errors='coerce')
+        
         return patient_df.sort_values(by='timestamp', ascending=True)
     except Exception as e: print(f"Error fetching/processing history: {e}"); return pd.DataFrame()
 
@@ -387,7 +406,7 @@ def create_pdf_bytes(report_text, patient_info, labs):
     report_text_str = str(report_text or "")
     for line in report_text_str.split('\n'):
         line_stripped = line.strip()
-        if line_stripped:
+        if line_stripped: # **PDF BUG FIX**: Only process non-empty lines
             reshaped_line = arabic_reshaper.reshape(line_stripped); bidi_line = get_display(reshaped_line)
             pdf.multi_cell(0, 7, bidi_line, align='R')
         else:
@@ -400,38 +419,80 @@ st.markdown("""
     <style>
          @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body, .stApp, input, textarea, button, select, label, div[data-baseweb="select"] > div, .stDataFrame *, .stTable * { font-family: 'Cairo', sans-serif !important; direction: rtl; }
-        .stApp { background: linear-gradient(135deg, #FFF0F5 0%, #E6E6FA 100%); }
-        .main > div { background-color: rgba(255, 255, 255, 0.95); padding: 2rem 3rem; border-radius: 25px; box-shadow: 0 15px 50px rgba(138, 43, 226, 0.12); border: 1px solid rgba(255, 255, 255, 0.3); }
-        h1, h2, h3 { color: #8A2BE2; font-weight: 700; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); }
+        /* **PINKER THEME** & Mobile Responsive */
+        .stApp { background: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 100%); } /* Softer Pink Gradient */
+        .main > div { 
+            background-color: rgba(255, 255, 255, 0.95); 
+            padding: 2rem; 
+            border-radius: 25px; 
+            box-shadow: 0 15px 50px rgba(255, 105, 180, 0.15); /* Softer Pink Shadow */
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+        }
+        h1, h2, h3 { color: #D81B60; font-weight: 700; } /* Main Title Pink */
         h1 { text-align: center; margin-bottom: 2.5rem; }
-        h3 { border-bottom: 2px solid #D8BFD8; padding-bottom: 0.6rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center;}
-        h3::before { content: '⭐ '; margin-left: 10px; font-size: 1.1em; color: #DA70D6; }
+        h3 { border-bottom: 2px solid #F8BBD0; padding-bottom: 0.6rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center;}
+        h3::before { content: '⭐ '; margin-left: 10px; font-size: 1.1em; color: #FF69B4; }
         h3:contains("المعلومات الأساسية")::before { content: '👤 '; }
         h3:contains("القياسات الأساسية")::before { content: '📏 '; }
         h3:contains("عوامل الخطورة")::before { content: '❗ '; }
         h3:contains("الأعراض الحالية")::before { content: '❓ '; }
         h3:contains("نتائج التحاليل")::before { content: '🔬 '; }
-        .stButton>button { border-radius: 30px; border: none; color: white; background: linear-gradient(45deg, #DA70D6, #8A2BE2); padding: 15px 40px; font-size: 1.1em; font-weight: 700; box-shadow: 0 6px 20px rgba(138, 43, 226, 0.35); transition: all 0.3s ease; cursor: pointer; }
-        .stButton>button:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 10px 30px rgba(138, 43, 226, 0.45); }
-        .stTextInput input, .stNumberInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div { border-radius: 12px; border: 1px solid #D1C4E9 !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); transition: all 0.2s ease-in-out; padding: 10px 12px;}
-        .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus, .stSelectbox div[data-baseweb="select"] > div:focus-within { border-color: #9575CD !important; box-shadow: 0 0 0 4px rgba(149, 117, 205, 0.15) !important; transform: scale(1.01); }
-        .stDataFrame, .stTable { border-radius: 10px; overflow: hidden; border: 1px solid #E6E6FA; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .stSpinner > div { border-top-color: #8A2BE2 !important; border-left-color: #8A2BE2 !important; }
-        .stMetric { background-color: #EDE7F6; padding: 1rem 1.5rem; border-radius: 15px; border: 1px solid #D1C4E9; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05);}
-        .stMetric label { color: #673AB7; font-weight: bold; font-size: 0.9em;}
-        .stMetric .st-ae { font-size: 2em; color: #512DA8; font-weight: 700;}
-        .stProgress > div > div { background-image: linear-gradient(45deg, #BA68C8, #7E57C2); border-radius: 10px; }
-        [data-testid="stSidebar"] { background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 255, 255, 0.25); box-shadow: 5px 0px 20px rgba(138, 43, 226, 0.08);}
+        
+        .stButton>button { 
+            border-radius: 30px; border: none; color: white; 
+            background: linear-gradient(45deg, #FF69B4, #D81B60); /* Pink Gradient */
+            padding: 15px 40px; font-size: 1.1em; font-weight: 700; 
+            box-shadow: 0 6px 20px rgba(216, 27, 96, 0.35); 
+            transition: all 0.3s ease; cursor: pointer; 
+        }
+        .stButton>button:hover { 
+            transform: translateY(-5px) scale(1.05); 
+            box-shadow: 0 10px 30px rgba(216, 27, 96, 0.45); 
+        }
+        
+        .stTextInput input, .stNumberInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div { 
+            border-radius: 12px; border: 1px solid #F48FB1 !important; /* Pink border */
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); 
+            transition: all 0.2s ease-in-out; padding: 10px 12px;
+        }
+        .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus, .stSelectbox div[data-baseweb="select"] > div:focus-within { 
+            border-color: #D81B60 !important; /* Darker Pink Focus */
+            box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.2) !important; 
+            transform: scale(1.01); 
+        }
+        
+        .stDataFrame, .stTable { border-radius: 10px; overflow: hidden; border: 1px solid #F8BBD0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .stSpinner > div { border-top-color: #D81B60 !important; border-left-color: #D81B60 !important; }
+        .stMetric { background-color: #FCE4EC; padding: 1rem 1.5rem; border-radius: 15px; border: 1px solid #F8BBD0; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05);}
+        .stMetric label { color: #AD1457; font-weight: bold; font-size: 0.9em;}
+        .stMetric .st-ae { font-size: 2em; color: #880E4F; font-weight: 700;}
+        .stProgress > div > div { background-image: linear-gradient(45deg, #FF69B4, #D81B60); border-radius: 10px; }
+        
+        [data-testid="stSidebar"] { background-color: rgba(255, 240, 245, 0.9); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 105, 180, 0.2); box-shadow: 5px 0px 20px rgba(255, 105, 180, 0.1);}
         [data-testid="stSidebar"] img { display: block; margin-left: auto; margin-right: auto; margin-bottom: 0.5rem; }
-        [data-testid="stSidebar"] h1 { color: #8A2BE2; margin-top: -15px; text-align: center; font-size: 1.8em;}
-        [data-testid="stSidebar"] .stRadio > label { padding-bottom: 12px; font-size: 1.1em; font-weight: bold; color: #6A1B9A; display: block; text-align: center;}
-        [data-testid="stSidebar"] .stRadio > div > label { background-color: rgba(230, 230, 250, 0.85); border-radius: 15px; padding: 12px 15px; margin-bottom: 8px; transition: all 0.3s ease; border: 1px solid transparent; display: block; text-align: center; cursor: pointer;}
-        [data-testid="stSidebar"] .stRadio > div > label:hover { background-color: rgba(216, 191, 216, 1); border-color: #DA70D6; transform: translateX(-5px) scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
-        [data-testid="stSidebar"] .stRadio > div[aria-checked="true"] > label { background: linear-gradient(45deg, #DA70D6, #8A2BE2); color: white; border-color: #8A2BE2; font-weight: bold; box-shadow: 0 6px 15px rgba(138, 43, 226, 0.3);}
+        [data-testid="stSidebar"] h1 { color: #D81B60; margin-top: -15px; text-align: center; font-size: 1.8em;}
+        [data-testid="stSidebar"] .stRadio > label { padding-bottom: 12px; font-size: 1.1em; font-weight: bold; color: #AD1457; display: block; text-align: center;}
+        [data-testid="stSidebar"] .stRadio > div > label { background-color: rgba(255, 230, 238, 0.85); border-radius: 15px; padding: 12px 15px; margin-bottom: 8px; transition: all 0.3s ease; border: 1px solid transparent; display: block; text-align: center; cursor: pointer;}
+        [data-testid="stSidebar"] .stRadio > div > label:hover { background-color: rgba(255, 204, 229, 1); border-color: #FF80AB; transform: translateX(-5px) scale(1.03); box-shadow: 0 4px 10px rgba(0,0,0,0.05);}
+        [data-testid="stSidebar"] .stRadio > div[aria-checked="true"] > label { background: linear-gradient(45deg, #FF69B4, #D81B60); color: white; border-color: #D81B60; font-weight: bold; box-shadow: 0 6px 15px rgba(216, 27, 96, 0.3);}
         [data-testid="stSidebar"] .stRadio input { display: none; }
-        .stContainer { border: 1px solid #E6E6FA; border-radius: 15px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255, 255, 255, 0.65);}
+        
+        .stContainer { border: 1px solid #F8BBD0; border-radius: 15px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255, 255, 255, 0.65);}
         .stAlert { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
         .stAlert [data-testid="stMarkdownContainer"] p { font-weight: bold; }
+        
+        /* Mobile Responsive Fixes */
+        @media (max-width: 768px) {
+            .main > div { padding: 1rem 1.5rem; } /* Reduce padding on mobile */
+            h1 { font-size: 1.8em; margin-bottom: 1.5rem; }
+            h3 { font-size: 1.2em; }
+            .stButton>button { padding: 12px 25px; font-size: 1em; }
+            .stMetric { padding: 0.5rem; }
+            .stMetric .st-ae { font-size: 1.5em; }
+            .stMetric label { font-size: 0.8em; }
+            [data-testid="stSidebar"] .stRadio > div > label { padding: 10px 12px; }
+            [data-testid="stSidebar"] .stRadio > div > label:hover { transform: none; } /* Disable hover on mobile */
+        }
     </style>
 """, unsafe_allow_html=True)
 
