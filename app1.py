@@ -1,5 +1,5 @@
 """
-Professional Pregnancy AI Assistant (Graduation Project - **v12 - Mobile & Pink UI**)
+Professional Pregnancy AI Assistant (Graduation Project - **v12 - Deployment Ready**)
 Features:
 - **Premium Front-End:** **Fully mobile-responsive**, **new pink color scheme**, dashboard layout, interactive Plotly charts, SVG logo, refined CSS.
 - **Enhanced AI Logic:** Includes detailed patient history, AI "thinks aloud", assesses urgency, intelligently parses OCR, considers medications.
@@ -29,6 +29,7 @@ import re
 import json
 import uuid # For generating unique record IDs
 import base64 # For SVG logo
+import platform # **BUG FIX: Added missing platform import**
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
@@ -174,36 +175,52 @@ def get_gsheet_connection():
     except Exception as e: st.error(f"❌ فشل الاتصال بـ Google Sheets: {e}"); return None
 
 def get_patient_history_df(worksheet, patient_id_input):
-    """Robustly fetches patient history."""
+    """
+    Robustly fetches patient history using get_all_values() for reliability.
+    """
     try:
         if worksheet is None: return pd.DataFrame()
         all_values = worksheet.get_all_values()
         if len(all_values) <= 1: return pd.DataFrame()
+
         headers_raw = all_values[0]
         headers = []
         for h in headers_raw:
             cleaned_h = h.strip().lower()
             if cleaned_h: headers.append(cleaned_h)
             else: break
+        
         num_cols = len(headers)
         data = [row[:num_cols] for row in all_values[1:]]
+        
         df = pd.DataFrame(data, columns=headers)
+        
         required_cols = ['patient_id', 'timestamp']
         if not all(col in df.columns for col in required_cols):
              if 'patient_id' not in df.columns: return pd.DataFrame()
+
         df = df.replace('', pd.NA)
         search_id = str(patient_id_input).strip().lower()
+        
         if 'patient_id' not in df.columns: return pd.DataFrame()
+            
         df['patient_id_str'] = df['patient_id'].astype(str).str.strip().str.lower()
         patient_df = df[df['patient_id_str'] == search_id].copy().drop(columns=['patient_id_str'])
+        
         if patient_df.empty: return pd.DataFrame()
+
         if 'timestamp' in patient_df.columns:
             patient_df['timestamp'] = pd.to_datetime(patient_df['timestamp'], errors='coerce')
             patient_df.dropna(subset=['timestamp'], inplace=True)
         else: return patient_df
-        numeric_cols = ['age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm', 'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg', 'pre_pregnancy_bmi', 'systolic_bp', 'diastolic_bp', 'fasting_glucose', 'ogtt_1h', 'ogtt_2h', 'hba1c', 'hb', 'platelets', 'alt', 'ast', 'creatinine', 'bnp']
+
+        numeric_cols = ['age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm', 
+                        'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg', 
+                        'pre_pregnancy_bmi', 'systolic_bp', 'diastolic_bp', 'fasting_glucose', 
+                        'ogtt_1h', 'ogtt_2h', 'hba1c', 'hb', 'platelets', 'alt', 'ast', 'creatinine', 'bnp']
         for col in numeric_cols:
             if col in patient_df.columns: patient_df[col] = pd.to_numeric(patient_df[col], errors='coerce')
+        
         return patient_df.sort_values(by='timestamp', ascending=True)
     except Exception as e: print(f"Error fetching/processing history: {e}"); return pd.DataFrame()
 
