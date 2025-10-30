@@ -1,29 +1,25 @@
-import sys
 import os
 import streamlit as st
 import google.generativeai as genai
 import pandas as pd
+# import sys ❌ تم حذف استيراد sys بالكامل
 
-# 💡💡 --- (1. كود إصلاح مسار الاستيراد) --- 💡💡
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-# 💡💡 --- (نهاية الكود المضاف) --- 💡💡
 
-# --- استيراد الموارد المشتركة ---
+# --- استيراد الموارد المشتركة (الآن ستنجح لأن المسار رسمي) ---
 try:
     from shared_helpers import (
-        apply_global_styles, build_sidebar,  # <-- 💡 (تمت إضافة build_sidebar)
+        apply_global_styles, build_sidebar,
         MODEL_NAME, MEDICAL_KB, USE_GEMINI,
         get_gsheet_connection, get_patient_history_df, GSheetError, safe_get
     )
 except ImportError:
-    st.error("فشل استيراد shared_helpers.py. تأكد أن الملف موجود في المجلد الرئيسي.")
+    st.title("❌ خطأ في الإعداد")
+    st.error("فشل استيراد shared_helpers.py. يرجى التأكد من أن الملف موجود في المجلد الرئيسي (Root).")
     st.stop()
 
-# --- 💡💡 (2. تطبيق الـ CSS والقائمة الجانبية) 💡💡 ---
+# --- 💡💡 تطبيق الـ CSS والقائمة الجانبية 💡💡 ---
 apply_global_styles()
-build_sidebar() # <-- 💡 (هذا السطر يحل مشكلة اختفاء القائمة)
+build_sidebar()
 
 
 def show_chatbot_page():
@@ -184,4 +180,6 @@ def show_chatbot_page():
 
 # --- 💡💡 السطر الأهم: شغل الدالة الرئيسية 💡💡 ---
 show_chatbot_page()
+```eof
 
+**الآن، يرجى إرسال كود ملف `pages/dashboard.py` ليتم تعديله (حذف كود `sys.path`).**
