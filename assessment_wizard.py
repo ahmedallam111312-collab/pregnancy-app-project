@@ -4,31 +4,28 @@ import datetime
 import os
 import re
 import uuid
-import sys
+# import sys ❌ تم حذف استيراد sys بالكامل
 
-# 💡💡 --- (1. كود إصلاح مسار الاستيراد) --- 💡💡
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-# 💡💡 --- (نهاية الكود المضاف) --- 💡💡
 
-# --- استيراد الدوال المشتركة والمتغيرات ---
+# --- استيراد الدوال المشتركة والمتغيرات (يجب أن يعمل هذا الآن في Streamlit Cloud) ---
 try:
     from shared_helpers import (
-        apply_global_styles,
-        build_sidebar,  # <-- 💡 (تمت إضافة هذا السطر)
+        apply_global_styles, build_sidebar, 
         get_gsheet_connection, get_patient_history_df, get_relevant_risk_factors,
         calculate_bmi, ocr_with_tesseract, ai_generate_final_report, save_record_to_gsheet,
         safe_get, get_urgency_color, create_pdf_bytes, FPDF_EXISTS, ARABIC_FONT_PATH,
         GSHEET_LAB_HEADERS, TESSERACT_AVAILABLE, GSheetError, AIError, PDFError, OCRError
     )
 except ImportError:
-    st.error("فشل استيراد shared_helpers.py. تأكد أن الملف موجود في المجلد الرئيسي.")
+    # ❌ لن نستخدم st.error هنا، لكننا سنفشل بهدوء للسماح لـ Streamlit بالعمل
+    st.title("❌ خطأ في الإعداد")
+    st.error("فشل استيراد shared_helpers.py. يرجى التأكد من أن الملف موجود في المجلد الرئيسي (Root).")
     st.stop()
 
-# --- 💡💡 (2. تطبيق الـ CSS والقائمة الجانبية) 💡💡 ---
-apply_global_styles()
-build_sidebar()  # <-- 💡 (تمت إضافة هذا السطر ليحل مشكلة اختفاء القائمة)
+
+# --- 💡💡 تطبيق الـ CSS والقائمة الجانبية 💡💡 ---
+apply_global_styles() 
+build_sidebar() 
 
 
 def assessment_wizard():
@@ -398,7 +395,7 @@ def assessment_wizard():
                 'form_data', 'last_uploaded_id', 'ai_extracted_labs',
                 'last_patient_info', 'last_labs'
             ]
-
+            
             for key in keys_to_clear:
                 if key in st.session_state:
                     if key == 'patient_history_df':
@@ -418,7 +415,7 @@ def assessment_wizard():
                             try:
                                 del st.session_state[key]
                             except:
-                                pass  # تجاهل إذا كان المفتاح غير موجود
+                                pass # تجاهل إذا كان المفتاح غير موجود
 
             st.session_state.assessment_step = 0
             st.rerun()
