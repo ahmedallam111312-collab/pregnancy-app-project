@@ -1,5 +1,5 @@
 """
-ملف الدوال المشتركة (Helpers) - نسخة v27
+ملف الدوال المشتركة (Helpers) - نسخة v29
 يحتوي هذا الملف على كل الوظائف، قواعد البيانات، الذكاء الاصطناعي، التنسيق (CSS)،
 والقائمة الجانبية الموحدة (مع المسار الصحيح للصفحة الرئيسية).
 """
@@ -19,7 +19,7 @@ import json
 import uuid  # For generating unique record IDs
 import base64  # For SVG logo
 import platform  # For OS detection
-# ❌ تم حذف استيراد sys من هنا
+import sys # 💡 (مطلوب لدالة build_sidebar)
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
@@ -692,3 +692,4 @@ def build_sidebar():
         st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
         st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
         st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
+
