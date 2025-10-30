@@ -1,29 +1,24 @@
-import sys
-import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
-# 💡💡 --- (1. كود إصلاح مسار الاستيراد) --- 💡💡
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-# 💡💡 --- (نهاية الكود المضاف) --- 💡💡
+# import sys ❌ تم حذف استيراد sys بالكامل
+import os # تم الاحتفاظ بـ os لاستخدامه في plotly
 
 try:
-    # --- (💡 تعديل: تمت إضافة build_sidebar و GSheetError) ---
+    # --- استيراد الدوال من الملف المشترك (الآن ستنجح لأن المسار رسمي) ---
     from shared_helpers import (
         apply_global_styles, build_sidebar,
         get_gsheet_connection, get_patient_history_df,
         GSheetError # (يفضل استيراد الأخطاء المخصصة)
     )
 except ImportError:
-    st.error("فشل استيراد shared_helpers.py. تأكد أن الملف موجود في المجلد الرئيسي.")
+    st.title("❌ خطأ في الإعداد")
+    st.error("فشل استيراد shared_helpers.py. يرجى التأكد من أن الملف موجود في المجلد الرئيسي (Root).")
     st.stop()
 
-# --- 💡💡 (2. تطبيق الـ CSS والقائمة الجانبية) 💡💡 ---
+# --- 💡💡 تطبيق الـ CSS والقائمة الجانبية 💡💡 ---
 apply_global_styles()
-build_sidebar() # <-- 💡 (تمت إضافة هذا السطر ليحل مشكلة اختفاء القائمة)
+build_sidebar()
 
 
 def show_dashboard():
@@ -32,7 +27,7 @@ def show_dashboard():
 
     try:
         worksheet = get_gsheet_connection()
-    except GSheetError as e: # <-- (أفضل استخدام الخطأ المخصص)
+    except GSheetError as e:
         st.error(f"❌ فشل الاتصال بقاعدة البيانات: {e}")
         st.stop()
     except Exception as e:
@@ -132,4 +127,3 @@ def show_dashboard():
 if 'dashboard_patient_id' not in st.session_state:
     st.session_state.dashboard_patient_id = ""
 show_dashboard()
-
