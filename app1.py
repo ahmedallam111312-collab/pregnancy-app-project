@@ -1,23 +1,16 @@
 """
-Professional Pregnancy AI Assistant (Graduation Project - v26 - Final Sidebar Fix)
-This is the main entry point (Home Page) for the Streamlit app.
-It now calls the global sidebar and style functions from shared_helpers.
+Professional Pregnancy AI Assistant (Graduation Project - v27 - Cloud Fix)
+تم إصلاح مشكلة StreamlitPageNotFoundError عبر العودة للمسارات الرسمية.
 """
 
 import streamlit as st
 import base64
 import platform
 import os
-import sys
-
-# --- 1. كود إصلاح مسار الاستيراد (مهم جداً) ---
-project_root = os.path.abspath(os.path.dirname(__file__))
-if project_root not in sys.path:
-    sys.path.append(project_root)
-# --- (نهاية الكود) ---
+# import sys ❌ تم حذف استيراد sys بالكامل
 
 try:
-    # --- 2. استيراد الدوال العامة من الملف المشترك ---
+    # --- استيراد الدوال من الملف المشترك (الآن ستنجح لأن المسارات رسمية) ---
     from shared_helpers import apply_global_styles, build_sidebar, SVG_DATA_URI
 except ImportError:
     st.error("فشل استيراد shared_helpers.py. تأكد أن الملف موجود في المجلد الرئيسي.")
@@ -28,7 +21,7 @@ except ImportError:
 st.set_page_config(page_title="مساعد الحمل الذكي", layout="wide",
                    initial_sidebar_state="expanded")
 
-# --- 💡💡 3. تطبيق الـ CSS والقائمة الجانبية في كل صفحة 💡💡 ---
+# --- 💡💡 تطبيق الـ CSS والقائمة الجانبية في كل صفحة 💡💡 ---
 apply_global_styles()
 build_sidebar()
 
@@ -70,4 +63,3 @@ with col2:
 with col3:
     if st.button("👣 عداد حركة الجنين", use_container_width=True):
         st.switch_page("pages/fmc_counter.py")
-# --- (نهاية الكود) ---
