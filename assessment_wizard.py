@@ -7,25 +7,24 @@ import uuid
 # import sys ❌ تم حذف استيراد sys بالكامل
 
 
-# --- استيراد الدوال المشتركة والمتغيرات (يجب أن يعمل هذا الآن في Streamlit Cloud) ---
+# --- استيراد الدوال المشتركة والمتغيرات (الآن ستنجح لأن المسار رسمي) ---
 try:
     from shared_helpers import (
-        apply_global_styles, build_sidebar, 
+        apply_global_styles, build_sidebar,
         get_gsheet_connection, get_patient_history_df, get_relevant_risk_factors,
         calculate_bmi, ocr_with_tesseract, ai_generate_final_report, save_record_to_gsheet,
         safe_get, get_urgency_color, create_pdf_bytes, FPDF_EXISTS, ARABIC_FONT_PATH,
         GSHEET_LAB_HEADERS, TESSERACT_AVAILABLE, GSheetError, AIError, PDFError, OCRError
     )
 except ImportError:
-    # ❌ لن نستخدم st.error هنا، لكننا سنفشل بهدوء للسماح لـ Streamlit بالعمل
     st.title("❌ خطأ في الإعداد")
     st.error("فشل استيراد shared_helpers.py. يرجى التأكد من أن الملف موجود في المجلد الرئيسي (Root).")
     st.stop()
 
 
 # --- 💡💡 تطبيق الـ CSS والقائمة الجانبية 💡💡 ---
-apply_global_styles() 
-build_sidebar() 
+apply_global_styles()
+build_sidebar()
 
 
 def assessment_wizard():
