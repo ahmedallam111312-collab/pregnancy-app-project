@@ -1,7 +1,7 @@
 """
-ملف الدوال المشتركة (Helpers) - نسخة v26
-يحتوي هذا الملف على كل الوظائف، قواعد البيانات، الذكاء الاصطناعي، والتنسيق (CSS)،
-والآن يحتوي أيضًا على كود القائمة الجانبية الموحدة.
+ملف الدوال المشتركة (Helpers) - نسخة v28
+يحتوي هذا الملف على كل الوظائف، قواعد البيانات، الذكاء الاصطناعي، التنسيق (CSS)،
+والقائمة الجانبية الموحدة (بدون مجلد pages).
 """
 
 import datetime
@@ -89,14 +89,8 @@ GDRIVE_SHEET_NAME = "GDM_Research_Data_V2"
 class GSheetError(Exception):
     """خطأ مخصص لمشاكل Google Sheets."""
     pass
-
-
 class AIError(Exception): pass
-
-
 class PDFError(Exception): pass
-
-
 class OCRError(Exception): pass
 
 
@@ -122,12 +116,10 @@ SVG_LOGO = r'''
 </svg>
 '''
 
-
 @st.cache_data
 def svg_to_data_uri(svg_text: str) -> str:
     """Converts SVG text to a base64 data URI."""
     return "data:image/svg+xml;base64," + base64.b64encode(svg_text.encode('utf-8')).decode('utf-8')
-
 
 SVG_DATA_URI = svg_to_data_uri(SVG_LOGO)
 
@@ -145,15 +137,14 @@ Anemia,"دوخة عند الوقوف، تعب شديد وإرهاق، شحوب (
 UTI,"ألم أو حرقان أثناء التبول، تكرار التبول، إلحاح بولي، ألم فوق العانة، **غثيان/قيء (إذا وصلت للكلى)**","Urine Analysis, Urine Culture","WBCs <5, Nitrite Negative","حرارة، قشعريرة، ألم بالجانب (الكلى)، غثيان/قيء (علامات Pyelonephritis)","مضاد حيوي مناسب للحمل فوراً (حسب نتيجة المزرعة إن أمكن) مع إكمال الجرعة كاملة، شرب سوائل بكثرة (8-10 أكواب ماء يومياً)، تفريغ المثانة بانتظام"
 Hyperemesis Gravidarum,"**غثيان وقيء شديد ومستمر** يمنع الأكل/الشرب، فقدان وزن >5% من وزن ما قبل الحمل","Ketones in Urine, Electrolytes, LFTs","Ketones: Negative","جفاف شديد (قلة بول، دوخة)، فقدان وزن ملحوظ، كيتون في البول، خلل أملاح (هايبوكاليميا)","تجنب الأطعمة الدسمة/الروائح القوية، وجبات صغيرة جداً وجافة (بسكويت مالح)، سوائل باردة، فيتامين B6، أدوية مضادة للقيء، قد تحتاج لسوائل وريدية بالمستشفى"
 Preterm Labor Signs,"انقباضات رحمية منتظمة (>4/ساعة قبل الأسبوع 37)، آلام تشبه الدورة الشهرية، نزول ماء أو إفرازات دموية/مخاطية، ضغط شديد بالحوض","Cervical exam, Ultrasound (TVU)","Cervix closed & long (>2.5cm)","انقباضات منتظمة ومؤلمة، تغييرات بعنق الرحم (قصر/اتساع)","**طوارئ طبية**. راحة تامة، شرب سوائل، التوقف عن أي مجهود، التواصل مع الطبيب أو المستشفى **فوراً**، قد تحتاج لأدوية لإيقاف الانقباضات (Tocolytics) وحقنة الرئة للجنين"
-Placenta Previa,"نزيف مهبلي أحمر فاتح مفاجئ **بدون ألم** (غالبًا في الثلث الثاني أو الثالث)","Ultrasound (السونار هو التشخيص الوحيد)","-","نزيف غزير ومتكرر، انقباضات رحمية مصاحبة للنزيف","راحة تامة، تجنب العلاقة الزوجية والفحص المهبلي تماماً، متابعة لصيقة بالسونار، الولادة تكون قيصرية دائماً. في حال النزيف الشديد: طوارئ"
-Placental Abruption,"نزيف مهبلي داكن (قد يكون داخلياً بدون نزول دم)، **ألم شديد مستمر بالبطن**، بطن صلبة (كالحجر)، قلة حركة الجنين","Clinical diagnosis, Ultrasound (قد لا يظهر)","-","ألم شديد، بطن صلبة كلوح الخشب، توقف حركة الجنين، علامات صدمة للأم","**طوارئ طبية قصوى**. التوجه للطوارئ فوراً. غالباً ما تتطلب ولادة عاجلة (قيصرية أو طبيعية حسب الحالة)"
+Placenta Previa,"نزيف مهbli أحمر فاتح مفاجئ **بدون ألم** (غالبًا في الثلث الثاني أو الثالث)","Ultrasound (السونار هو التشخيص الوحيد)","-","نزيف غزير ومتكرر، انقباضات رحمية مصاحبة للنزيف","راحة تامة، تجنب العلاقة الزوجية والفحص المهبلي تماماً، متابعة لصيقة بالسونار، الولادة تكون قيصرية دائماً. في حال النزيف الشديد: طوارئ"
+Placental Abruption,"نزيف مهbli داكن (قد يكون داخلياً بدون نزول دم)، **ألم شديد مستمر بالبطن**، بطن صلبة (كالحجر)، قلة حركة الجنين","Clinical diagnosis, Ultrasound (قد لا يظهر)","-","ألم شديد، بطن صلبة كلوح الخشب، توقف حركة الجنين، علامات صدمة للأم","**طوارئ طبية قصوى**. التوجه للطوارئ فوراً. غالباً ما تتطلب ولادة عاجلة (قيصرية أو طبيعية حسب الحالة)"
 Cholestasis of Pregnancy,"**حكة شديدة** (خاصة في راحة اليدين وباطن القدمين) تزداد سوءاً في الليل، **بدون طفح جلدي**","Bile Acids, LFTs","Bile Acids < 10 μmol/L","حكة لا تحتمل، اصفرار الجلد (يرقان)، بول داكن، ارتفاع شديد في أحماض الصفراء (>40)","متابعة طبية قريبة، أدوية (Ursodiol) لتقليل الحكة والأحماض، مراقبة وظائف الكبد وحالة الجنين، قد تستدعي ولادة مبكرة (37-38 أسبوع)"
 DVT (Deep Vein Thrombosis),"تورم في ساق واحدة (عادة اليسرى)، ألم شديد بالساق، احمرار، سخونة في المنطقة المتورمة","Doppler Ultrasound (سونار دوبلر)","-","ألم شديد عند ثني القدم للأعلى (Homan's sign)، تاريخ مرضي بجلطات","**تقييم فوري**. راحة ورفع الساق، أدوية مسيلة للدم (مثل Enoxaparin) مناسبة للحمل، تجنب الجلوس لفترة طويلة"
 Peripartum Cardiomyopathy (PPCM),"ضيق تنفس عند الاستلقاء (orthopnea)، سعال ليلي، تورم شديد بالقدمين والساقين، خفقان، تعب شديد","Echo (موجات صوتية على القلب), BNP","BNP < 100 pg/mL (قد يرتفع قليلاً طبيعياً في الحمل)","ارتفاع BNP، انخفاض كفاءة عضلة القلب (EF) في الإيكو","**طوارئ قلب فورية**. راحة تامة، أدوية مدرة للبول وأدوية دعم القلب (ACEI/ARBs ممنوعة أثناء الحمل)، متابعة لصيقة مع طبيب قلب"
-Normal Pregnancy,"**غثيان صباحي خفيف (خاصة T1)**، تعب (T1/T3)، زيادة وزن طبيعية، حركة جنين طبيعية، آلام ظهر/حوض بسيطة","Routine Antenal Care","-","عدم وجود علامات خطر (نزيف، صداع شديد، انقباضات منتظمة، قلة حركة جنين)","استمرار بالمتابعة، غذاء صحي، فيتامينات الحمل، نشاط بدني معتدل"
+Normal Pregnancy,"**غثيان صباحي خفيف (خاصة T1)**، تعب (T1/T3)، زيادة وزن طبيعية، حركة جنين طبيعية، آلام ظهر/حوض بسيطة","Routine Antenal Care","-","عدم وجود علامات خطر (نزيف، صداع شديد، انقباضات منتظمة، قلة حركة الجنين)","استمرار بالمتابعة، غذاء صحي، فيتامينات الحمل، نشاط بدني معتدل"
 """
     return pd.read_csv(io.StringIO(csv_data))
-
 
 @st.cache_data
 def load_weekly_guide():
@@ -191,10 +182,10 @@ def load_weekly_guide():
              "t": "الصبر والمراقبة. استمري بمتابعة حركة الجنين. راقبي علامات بدء المخاض (انقباضات منتظمة وقوية، نزول الماء، الإفرازات المخاطية الدموية)."}
     }
 
-
 # --- استدعاء الدوال مرة واحدة وتخزينها كثوابت (Uppercase) ---
 MEDICAL_KB = load_medical_kb()
 WEEKLY_GUIDE = load_weekly_guide()
+
 
 IOM_GUIDELINES = {"نقص الوزن": (12.5, 18), "وزن طبيعي": (11.5, 16), "زيادة الوزن": (7, 11.5), "سمنة": (5, 9)}
 ALL_RISK_FACTORS = {
@@ -291,10 +282,10 @@ def get_patient_history_df(worksheet, patient_id_input):
         patient_df.dropna(subset=['timestamp'], inplace=True)
 
         numeric_cols = [
-                           'age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm',
-                           'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg',
-                           'pre_pregnancy_bmi', 'vomiting_frequency'
-                       ] + GSHEET_LAB_HEADERS
+            'age', 'gravida', 'para', 'abortion', 'gestational_week', 'height_cm',
+            'pre_pregnancy_weight_kg', 'current_weight_kg', 'weight_gain_kg',
+            'pre_pregnancy_bmi', 'vomiting_frequency'
+        ] + GSHEET_LAB_HEADERS
 
         for col in numeric_cols:
             if col in patient_df.columns:
@@ -417,7 +408,7 @@ def ai_generate_final_report(patient_info, labs, history_df, symptoms_text, ocr_
             raise AIError("استجابة AI ناقصة (لم يتم العثور على المفاتيح المطلوبة).")
 
         if not isinstance(ai_data['extracted_labs'], dict):
-            ai_data['extracted_labs'] = {}
+             ai_data['extracted_labs'] = {}
 
         return ai_data
 
@@ -558,7 +549,7 @@ def apply_global_styles():
             }
             /* **PINKER THEME** & Mobile Responsive */
             .stApp { background: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 100%); } /* Softer Pink Gradient */
-
+            
             /* (تأكد أن هذا الـ class صحيح، قد يحتاج للتعديل) */
             /* هذا يضمن أن الصفحات الفرعية لها خلفية بيضاء شفافة */
             .main > div { 
@@ -568,7 +559,7 @@ def apply_global_styles():
                 box-shadow: 0 15px 50px rgba(255, 105, 180, 0.15); 
                 border: 1px solid rgba(255, 255, 255, 0.3); 
             }
-
+            
             h1, h2, h3 { color: #D81B60 !important; font-weight: 700; } /* Main Title Pink */
             h1 { text-align: center; margin-bottom: 2.5rem; }
             h3 { border-bottom: 2px solid #F8BBD0; padding-bottom: 0.6rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center;}
@@ -635,7 +626,7 @@ def apply_global_styles():
                 .stMetric .st-ae { font-size: 1.5em; }
                 .stMetric label { font-size: 0.8em; }
             }
-
+            
             /* ستايل القائمة الجانبية الجديدة */
             [data-testid="stSidebar"] { 
                 background: linear-gradient(180deg, #FFF0F5 0%, #FFE4E1 100%);
@@ -678,7 +669,7 @@ def build_sidebar():
 
         # --- هذا هو نظام الروابط الجديد ---
         st.page_link("app1.py", label="🏠 القائمة الرئيسية", icon="🏠")
-        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️")
+        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕F️")
         st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
         st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
         st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
