@@ -684,8 +684,9 @@ def build_sidebar():
 
         # --- هذا هو نظام الروابط الجديد ---
         st.page_link(main_page_path, label="🏠 القائمة الرئيسية", icon="🏠")
-        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️")
+        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️") # <-- ✅
         st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
         st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
         st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
         st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
+
