@@ -142,7 +142,7 @@ def build_sidebar():
     with st.sidebar:
         st.image(SVG_DATA_URI, width=180)
         st.markdown("## 🩺 القائمة الرئيسية")
-        st.page_link("app.py", label="🏠 الصفحة الرئيسية", icon="🏠")
+        st.page_link("app1.py", label="🏠 الصفحة الرئيسية", icon="🏠")
         st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل")
         st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة")
         st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية")
@@ -247,3 +247,4 @@ def normalize_filename(name):
 if __name__ == "__main__":
     print("✅ shared_helpers.py imported successfully.")
     print(f"FPDF: {FPDF_EXISTS} | Tesseract: {TESSERACT_AVAILABLE}")
+
