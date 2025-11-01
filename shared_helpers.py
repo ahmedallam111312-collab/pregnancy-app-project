@@ -678,12 +678,12 @@ def build_sidebar():
         st.title("مساعد الحمل الذكي")
 
         # --- 💡💡 (تم تعديل المسار الرئيسي هنا) 💡💡 ---
-        st.page_link(app1.py, label="🏠 القائمة الرئيسية", icon="🏠")
-        
+        st.page_link("app1.py", label="🏠 القائمة الرئيسية", icon="🏠")        
         # --- 💡💡 (تم إصلاح الخطأ الإملائي هنا) 💡💡 ---
         st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️")
         st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
         st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
         st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
         st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
+
 
