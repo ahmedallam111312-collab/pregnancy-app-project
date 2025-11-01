@@ -1,5 +1,5 @@
 # ==============================
-# shared_helpers.py (Safe Version)
+# shared_helpers.py (Final Full Version)
 # ==============================
 
 import os
@@ -19,7 +19,9 @@ import google.generativeai as genai
 from google.generativeai.types import generation_types
 from PIL import Image
 
-# ========== إعداد لوج آمن ==========
+# ==============================
+# 🔹 إعداد اللوج
+# ==============================
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     handler = logging.StreamHandler()
@@ -28,19 +30,19 @@ if not logger.handlers:
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-# ========== متغيرات عامة ==========
+# ==============================
+# 🔹 متغيرات عامة
+# ==============================
 MODEL_NAME = 'gemini-2.5-flash'
 GEMINI_MODEL = None
 USE_GEMINI = False
 FPDF_EXISTS = False
 TESSERACT_AVAILABLE = False
-
 ARABIC_FONT_PATH = "DejaVuSans.ttf"
 
-
-# =====================================
-# محاولات استيراد مكتبات إضافية بأمان
-# =====================================
+# ==============================
+# 🔹 محاولات استيراد آمنة
+# ==============================
 try:
     from fpdf import FPDF
     from fpdf.enums import XPos, YPos
@@ -57,14 +59,16 @@ try:
 except Exception as e:
     logger.warning(f"Tesseract not available: {e}")
 
+# ==============================
+# 🔹 ثوابت واجهة المستخدم
+# ==============================
+SVG_DATA_URI = "https://upload.wikimedia.org/wikipedia/commons/1/1b/Pregnancy_icon.svg"
 
-# =============================
-# دالة تهيئة Gemini بأمان
-# =============================
+
+# ==============================
+# 🔹 تهيئة Gemini
+# ==============================
 def init_gemini_from_secrets(secrets: dict):
-    """
-    استخدمها داخل app.py بعد تحميل st.secrets
-    """
     global GEMINI_MODEL, USE_GEMINI
 
     try:
@@ -101,13 +105,57 @@ def init_gemini_from_secrets(secrets: dict):
         return False
 
 
-# =============================
-# Google Sheets Utility
-# =============================
+# ==============================
+# 🔹 دوال المظهر العام
+# ==============================
+def apply_global_styles():
+    """تطبيق تنسيقات CSS على صفحات Streamlit"""
+    st.markdown("""
+        <style>
+        /* عام */
+        body {
+            font-family: 'Cairo', sans-serif !important;
+            background-color: #fff5f8;
+        }
+        /* أزرار */
+        .stButton button {
+            background-color: #d81b60 !important;
+            color: white !important;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .stButton button:hover {
+            background-color: #ad1457 !important;
+        }
+        /* شريط جانبي */
+        section[data-testid="stSidebar"] {
+            background-color: #fce4ec !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
+def build_sidebar():
+    """إنشاء القائمة الجانبية الرئيسية"""
+    with st.sidebar:
+        st.image(SVG_DATA_URI, width=180)
+        st.markdown("## 🩺 القائمة الرئيسية")
+        st.page_link("app.py", label="🏠 الصفحة الرئيسية", icon="🏠")
+        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل")
+        st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة")
+        st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية")
+        st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي")
+        st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين")
+        st.markdown("---")
+        st.caption("إصدار المشروع: v27 - 2025")
+
+
+# ==============================
+# 🔹 دوال مساعدة عامة
+# ==============================
 def connect_to_google_sheet(json_keyfile_path, sheet_name):
-    """
-    ربط مع Google Sheets
-    """
     try:
         gc = gspread.service_account(filename=json_keyfile_path)
         sh = gc.open(sheet_name)
@@ -122,16 +170,9 @@ def connect_to_google_sheet(json_keyfile_path, sheet_name):
     return None
 
 
-# =============================
-# OCR Utility (Image to Text)
-# =============================
 def extract_text_from_image(image_bytes):
-    """
-    استخراج النص من صورة باستخدام Tesseract
-    """
     if not TESSERACT_AVAILABLE:
         return "Tesseract not available"
-
     try:
         image = Image.open(io.BytesIO(image_bytes))
         text = pytesseract.image_to_string(image, lang='eng+ara')
@@ -141,16 +182,9 @@ def extract_text_from_image(image_bytes):
         return ""
 
 
-# =============================
-# PDF Utility
-# =============================
 def save_pdf_report(file_path, title, content_lines):
-    """
-    إنشاء تقرير PDF بسيط
-    """
     if not FPDF_EXISTS:
         return False
-
     try:
         pdf = FPDF()
         pdf.add_page()
@@ -166,16 +200,9 @@ def save_pdf_report(file_path, title, content_lines):
         return False
 
 
-# =============================
-# Gemini Prompt Utility
-# =============================
 def generate_with_gemini(prompt_text):
-    """
-    إرسال prompt إلى Gemini وإرجاع الرد
-    """
     if not USE_GEMINI or GEMINI_MODEL is None:
         return "Gemini not initialized."
-
     try:
         response = GEMINI_MODEL.generate_content(prompt_text)
         return response.text if response else "No response."
@@ -184,9 +211,9 @@ def generate_with_gemini(prompt_text):
         return str(e)
 
 
-# =============================
-# Misc Helpers
-# =============================
+# ==============================
+# 🔹 دوال إضافية صغيرة
+# ==============================
 def generate_unique_id():
     return str(uuid.uuid4())
 
@@ -214,9 +241,9 @@ def normalize_filename(name):
     return name.strip()
 
 
-# =============================
-# اختبار بسيط (اختياري)
-# =============================
+# ==============================
+# 🔹 اختبار (عند التشغيل المباشر)
+# ==============================
 if __name__ == "__main__":
     print("✅ shared_helpers.py imported successfully.")
     print(f"FPDF: {FPDF_EXISTS} | Tesseract: {TESSERACT_AVAILABLE}")
