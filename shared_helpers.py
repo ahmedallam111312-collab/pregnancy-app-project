@@ -1,6 +1,7 @@
 """
-ملف الدوال المشتركة (Helpers) - نسخة v32
-(تم حذف القائمة الجانبية بالكامل وإصلاح الألوان)
+ملف الدوال المشتركة (Helpers) - نسخة v29
+يحتوي هذا الملف على كل الوظائف، قواعد البيانات، الذكاء الاصطناعي، التنسيق (CSS)،
+والقائمة الجانبية الموحدة (مع المسار الصحيح للصفحة الرئيسية).
 """
 
 import datetime
@@ -531,7 +532,7 @@ def create_pdf_bytes(report_text, patient_info, labs):
         raise PDFError(f"حدث خطأ غير متوقع أثناء إنشاء PDF: {e}")
 
 
-# --- 💡💡 (تمت إضافة هذه الدالة الجديدة) 💡💡 ---
+# --- 💡💡 (دالة الـ CSS) 💡💡 ---
 def apply_global_styles():
     """
     تطبق الـ CSS المخصص للتطبيق بالكامل.
@@ -541,9 +542,9 @@ def apply_global_styles():
             @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
             
             /* 💡💡 1. إصلاح الخط الأسود لجميع العناصر 💡💡 */
-            body, .stApp, input, textarea, button, select, label, div[data-baseweb="select"] > div, .stDataFrame *, .stTable *, .stMarkdown p, 
+            body, .stApp, input, textarea, button, select, label, div[data-basewab="select"] > div, .stDataFrame *, .stTable *, .stMarkdown p, 
             div[data-testid="stExpander"] div, [data-testid="stCheckbox"] label, [data-testid="stForm"] label, 
-            [data-testid="stRadio"] label { 
+            [data-testid="stRadio"] label, [data-testid="stSidebar"] span, [data-testid="stSidebar"] a { 
                 font-family: 'Cairo', sans-serif !important; 
                 direction: rtl; 
                 color: #000000 !important; /* **FIX**: Force BLACK text color */
@@ -639,4 +640,3 @@ def apply_global_styles():
 
 
 # --- ❌❌ (تم حذف دالة build_sidebar بالكامل) ❌❌ ---
-
