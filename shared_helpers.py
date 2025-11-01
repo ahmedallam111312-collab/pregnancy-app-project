@@ -19,7 +19,7 @@ import json
 import uuid  # For generating unique record IDs
 import base64  # For SVG logo
 import platform  # For OS detection
-import sys
+# ❌ تم حذف استيراد sys
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
@@ -635,20 +635,22 @@ def apply_global_styles():
                 font-family: 'Cairo', sans-serif !important;
                 font-weight: 700;
             }
+            
+            /* 💡💡 (تم تعديل هذا الجزء لإصلاح اللون الأبيض) 💡💡 */
             [data-testid="stSidebar"] a { /* روابط الصفحات */
                 font-family: 'Cairo', sans-serif !important;
                 font-size: 1.05em;
-                color: #AD1457 !important;
+                color: #AD1457 !important; /* <-- اللون الأساسي (أغمق) */
                 border-radius: 10px;
                 transition: all 0.2s ease;
             }
             [data-testid="stSidebar"] a:hover {
                 background-color: #FCE4EC;
-                color: #880E4F !important;
+                color: #880E4F !important; /* <-- لون عند المرور (أغمق) */
             }
             [data-testid="stSidebar"] a[aria-current="page"] { /* الصفحة الحالية */
                 background-color: #F48FB1;
-                color: #880E4F !important;
+                color: #880E4F !important; /* <-- لون الصفحة النشطة (أغمق) */
                 font-weight: 700;
             }
         </style>
@@ -657,36 +659,29 @@ def apply_global_styles():
 
 # --- 💡💡 (تمت إضافة دالة القائمة الجانبية الموحدة) 💡💡 ---
 def build_sidebar():
-    """
-    تنشئ القائمة الجانبية المخصصة (العربية).
-    يجب استدعاؤها في بداية كل صفحة.
-    """
-    
-    # 💡 (الحل 1: تحديد اسم الملف الرئيسي ديناميكيًا)
-    # هذا الكود يحدد ما إذا كنا في الصفحة الرئيسية أم لا
-    try:
-        # هذه الدالة لا تعمل دائمًا في كل البيئات، لذا نضعها في try
-        # في Streamlit Cloud، هذا السطر قد يسبب خطأ
-        # main_page_path = st.get_main_page_url_path() # <-- هذا السطر يسبب الخطأ
-        
-        # 💡 الحل الأبسط والأكثر ضمانًا
-        # نستخدم اسم الملف الرئيسي "app1.py" الذي حددناه
-        main_page_path = "app1.py"
-
-    except Exception as e:
-        print(f"Error getting main page path: {e}")
-        main_page_path = "app1.py" # الاعتماد على الاسم الافتراضي
+    """
+    تنشئ القائمة الجانبية المخصصة (العربية).
+    يجب استدعاؤها في بداية كل صفحة.
+    """
+    
+    # 💡 (الحل 1: تحديد اسم الملف الرئيسي ديناميكيًا)
+    # هذا الكود يحدد ما إذا كنا في الصفحة الرئيسية أم لا
+    try:
+        # 💡 (الحل 2: الاعتماد على الرمز '/' الرسمي)
+        main_page_path = "/" # <-- 💡💡💡 هذا هو المسار الصحيح للصفحة الرئيسية
+    except Exception as e:
+        print(f"Error getting main page path: {e}")
+        main_page_path = "/" # الاعتماد على الرمز الافتراضي
 
 
-    with st.sidebar:
-        st.image(SVG_DATA_URI, width=250)
-        st.title("مساعد الحمل الذكي")
+    with st.sidebar:
+        st.image(SVG_DATA_URI, width=250)
+        st.title("مساعد الحمل الذكي")
 
-        # --- هذا هو نظام الروابط الجديد ---
-        st.page_link(main_page_path, label="🏠 القائمة الرئيسية", icon="🏠")
-        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️") # <-- ✅
-        st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
-        st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
-        st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
-        st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
-
+        # --- 💡💡 (تم تعديل المسار الرئيسي هنا) 💡💡 ---
+        st.page_link(main_page_path, label="🏠 القائمة الرئيسية", icon="🏠")
+        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️")
+        st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
+        st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
+        st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
+        st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
