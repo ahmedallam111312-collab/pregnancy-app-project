@@ -1,5 +1,5 @@
 """
-ملف الدوال المشتركة (Helpers) - نسخة v29
+ملف الدوال المشتركة (Helpers) - نسخة v30
 يحتوي هذا الملف على كل الوظائف، قواعد البيانات، الذكاء الاصطناعي، التنسيق (CSS)،
 والقائمة الجانبية الموحدة (مع المسار الصحيح للصفحة الرئيسية).
 """
@@ -19,7 +19,7 @@ import json
 import uuid  # For generating unique record IDs
 import base64  # For SVG logo
 import platform  # For OS detection
-import sys # 💡 (مطلوب لدالة build_sidebar)
+import sys
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
@@ -33,7 +33,7 @@ try:
     if os.path.exists(ARABIC_FONT_PATH):
         FPDF_EXISTS = True
 except ImportError:
-    pass  # سيتم اكتشاف الخطأ عند محاولة إنشاء PDF
+    pass
 
 # --- Tesseract Configuration ---
 TESSERACT_CMD_PATH_WIN = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
@@ -46,26 +46,23 @@ try:
             pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD_PATH_WIN
             TESSERACT_AVAILABLE = True
     else:
-        # افتراض أنه مثبت على Streamlit Cloud أو Linux/Mac
         TESSERACT_AVAILABLE = True
 except ImportError:
-    pass  # سيتم اكتشاف الخطأ عند محاولة إجراء OCR
+    pass
 
 # --- AI Configuration ---
 MODEL_NAME = 'gemini-2.5-flash'
 GEMINI_MODEL = None
-USE_GEMINI = False  # (سيتم ضبطه على True عند النجاح)
+USE_GEMINI = False
 try:
     if "GEMINI_API_KEY" in st.secrets:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        # ضبط إعدادات الأمان الافتراضية
         safety_settings = [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
         ]
-        # إعداد النموذج مع وضع JSON (لصفحة التقييم)
         GEMINI_MODEL = genai.GenerativeModel(
             MODEL_NAME,
             generation_config=generation_types.GenerationConfig(
@@ -95,7 +92,7 @@ class PDFError(Exception): pass
 class OCRError(Exception): pass
 
 
-# --- 💡💡 (كود اللوجو) 💡💡 ---
+# --- SVG Logo ---
 SVG_LOGO = r'''
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="160" viewBox="0 0 420 160">
   <defs>
@@ -143,7 +140,7 @@ Placental Abruption,"نزيف مهbli داكن (قد يكون داخلياً ب�
 Cholestasis of Pregnancy,"**حكة شديدة** (خاصة في راحة اليدين وباطن القدمين) تزداد سوءاً في الليل، **بدون طفح جلدي**","Bile Acids, LFTs","Bile Acids < 10 μmol/L","حكة لا تحتمل، اصفرار الجلد (يرقان)، بول داكن، ارتفاع شديد في أحماض الصفراء (>40)","متابعة طبية قريبة، أدوية (Ursodiol) لتقليل الحكة والأحماض، مراقبة وظائف الكبد وحالة الجنين، قد تستدعي ولادة مبكرة (37-38 أسبوع)"
 DVT (Deep Vein Thrombosis),"تورم في ساق واحدة (عادة اليسرى)، ألم شديد بالساق، احمرار، سخونة في المنطقة المتورمة","Doppler Ultrasound (سونار دوبلر)","-","ألم شديد عند ثني القدم للأعلى (Homan's sign)، تاريخ مرضي بجلطات","**تقييم فوري**. راحة ورفع الساق، أدوية مسيلة للدم (مثل Enoxaparin) مناسبة للحمل، تجنب الجلوس لفترة طويلة"
 Peripartum Cardiomyopathy (PPCM),"ضيق تنفس عند الاستلقاء (orthopnea)، سعال ليلي، تورم شديد بالقدمين والساقين، خفقان، تعب شديد","Echo (موجات صوتية على القلب), BNP","BNP < 100 pg/mL (قد يرتفع قليلاً طبيعياً في الحمل)","ارتفاع BNP، انخفاض كفاءة عضلة القلب (EF) في الإيكو","**طوارئ قلب فورية**. راحة تامة، أدوية مدرة للبول وأدوية دعم القلب (ACEI/ARBs ممنوعة أثناء الحمل)، متابعة لصيقة مع طبيب قلب"
-Normal Pregnancy,"**غثيان صباحي خفيف (خاصة T1)**، تعب (T1/T3)، زيادة وزن طبيعية، حركة جنين طبيعية، آلام ظهر/حوض بسيطة","Routine Antenal Care","-","عدم وجود علامات خطر (نزيف، صداع شديد، انقباضات منتظمة، قلة حركة الجنين)","استمرار بالمتابعة، غذاء صحي، فيتامينات الحمل، نشاط بدني معتدل"
+Normal Pregnancy,"**غثيان صباحي خفيف (خاصة T1)**، تعب (T1/T3)، زيادة وزن طبيعية، حركة جنين طبيعية، آلام ظهر/حوض بسيطة","Routine Antenal Care","-","عدم وجود علامات خطر (نزيف، صداع شديد، انقباضات منتظمة، قلة حركة جنين)","استمرار بالمتابعة، غذاء صحي، فيتامينات الحمل، نشاط بدني معتدل"
 """
     return pd.read_csv(io.StringIO(csv_data))
 
@@ -660,37 +657,35 @@ def apply_global_styles():
 
 # --- 💡💡 (تمت إضافة دالة القائمة الجانبية الموحدة) 💡💡 ---
 def build_sidebar():
-    """
-    تنشئ القائمة الجانبية المخصصة (العربية).
-    يجب استدعاؤها في بداية كل صفحة.
-    """
-    
-    # 💡 (الحل 1: تحديد اسم الملف الرئيسي ديناميكيًا)
-    # هذا الكود يحدد ما إذا كنا في الصفحة الرئيسية أم لا
-    try:
-        # هذه الدالة لا تعمل دائمًا في كل البيئات، لذا نضعها في try
-        # في Streamlit Cloud، هذا السطر قد يسبب خطأ
-        # main_page_path = st.get_main_page_url_path() # <-- هذا السطر يسبب الخطأ
-        
-        # 💡 الحل الأبسط والأكثر ضمانًا
-        # نستخدم اسم الملف الرئيسي "app1.py" الذي حددناه
-        main_page_path = "app1.py"
+    """
+    تنشئ القائمة الجانبية المخصصة (العربية).
+    يجب استدعاؤها في بداية كل صفحة.
+    """
+    
+    # 💡 (الحل 1: تحديد اسم الملف الرئيسي ديناميكيًا)
+    # هذا الكود يحدد ما إذا كنا في الصفحة الرئيسية أم لا
+    try:
+        # هذه الدالة لا تعمل دائمًا في كل البيئات، لذا نضعها في try
+        # في Streamlit Cloud، هذا السطر قد يسبب خطأ
+        # main_page_path = st.get_main_page_url_path() # <-- هذا السطر يسبب الخطأ
+        
+        # 💡 الحل الأبسط والأكثر ضمانًا
+        # نستخدم اسم الملف الرئيسي "app1.py" الذي حددناه
+        main_page_path = "app1.py"
 
-    except Exception as e:
-        print(f"Error getting main page path: {e}")
-        main_page_path = "app1.py" # الاعتماد على الاسم الافتراضي
-
-
-    with st.sidebar:
-        st.image(SVG_DATA_URI, width=250)
-        st.title("مساعد الحمل الذكي")
-
-        # --- هذا هو نظام الروابط الجديد ---
-        st.page_link(main_page_path, label=" القائمة الرئيسية", icon="🏠")
-        st.page_link("pages/assessment_wizard.py", label=" التقييم الشامل", icon="👩‍⚕️")
-        st.page_link("pages/chatbot_page.py", label=" الدردشة الذكية", icon="💬")
-        st.page_link("pages/dashboard.py", label=" لوحة المتابعة", icon="📊")
-        st.page_link("pages/weekly_guide.py", label=" دليل الحمل الأسبوعي", icon="📅")
-        st.page_link("pages/fmc_counter.py", label=" عداد حركة الجنين", icon="👣")
+    except Exception as e:
+        print(f"Error getting main page path: {e}")
+        main_page_path = "app1.py" # الاعتماد على الاسم الافتراضي
 
 
+    with st.sidebar:
+        st.image(SVG_DATA_URI, width=250)
+        st.title("مساعد الحمل الذكي")
+
+        # --- هذا هو نظام الروابط الجديد ---
+        st.page_link(main_page_path, label="🏠 القائمة الرئيسية", icon="🏠")
+        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️")
+        st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
+        st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
+        st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
+        st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
