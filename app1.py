@@ -12,8 +12,8 @@ import os
 
 
 try:
-    # --- استيراد الدوال العامة والقائمة الجانبية من الملف المشترك ---
-    from shared_helpers import apply_global_styles, build_sidebar, SVG_DATA_URI
+    # --- استيراد الدوال العامة فقط بدون القائمة الجانبية ---
+    from shared_helpers import apply_global_styles, SVG_DATA_URI
 except ImportError:
     st.title("❌ خطأ حرج")
     st.error("فشل استيراد shared_helpers.py. يرجى التأكد من أن الملف موجود في المجلد الرئيسي (Root).")
@@ -22,11 +22,10 @@ except ImportError:
 
 # --- Page Config (يجب أن يكون أول أمر Streamlit) ---
 st.set_page_config(page_title="مساعد الحمل الذكي", layout="wide",
-                   initial_sidebar_state="expanded")
+                   initial_sidebar_state="collapsed")  # إخفاء الـ Sidebar تمامًا
 
-# --- 💡💡 تطبيق الـ CSS والقائمة الجانبية في كل صفحة 💡💡 ---
+# --- 💡 تطبيق الـ CSS فقط بدون Sidebar 💡 ---
 apply_global_styles()
-build_sidebar()
 
 
 # ---------------------------------------------------------------------
@@ -41,10 +40,7 @@ st.markdown(
 st.markdown("---")
 
 st.subheader("أهلاً بكِ في نظام المتابعة الذكي!")
-st.markdown("يرجى اختيار إحدى الخدمات من **القائمة الجانبية** (على اليمين في النسخة العربية) للبدء، أو استخدم الاختصارات السريعة:")
-
-st.info("✅ **تم الإصلاح:** ستظهر القائمة الجانبية العربية الآن في جميع الصفحات الفرعية.")
-
+st.markdown("يرجى اختيار إحدى الخدمات من **الروابط السريعة** أدناه للبدء:")
 
 # --- (أزرار التنقل في الصفحة الرئيسية) ---
 st.divider()
@@ -66,4 +62,5 @@ with col2:
 with col3:
     if st.button("👣 عداد حركة الجنين", use_container_width=True):
         st.switch_page("pages/fmc_counter.py")
+
 # --- (نهاية الكود) ---
