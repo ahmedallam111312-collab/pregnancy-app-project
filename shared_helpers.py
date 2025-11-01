@@ -1,7 +1,6 @@
 """
 ملف الدوال المشتركة (Helpers) - نسخة v30
-يحتوي هذا الملف على كل الوظائف، قواعد البيانات، الذكاء الاصطناعي، التنسيق (CSS)،
-والقائمة الجانبية الموحدة (مع المسار الصحيح للصفحة الرئيسية).
+(تم إصلاح خطأ SyntaxError في أيقونة 'assessment_wizard')
 """
 
 import datetime
@@ -19,7 +18,7 @@ import json
 import uuid  # For generating unique record IDs
 import base64  # For SVG logo
 import platform  # For OS detection
-# ❌ تم حذف استيراد sys
+import sys # 💡 (مطلوب لدالة build_sidebar)
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
