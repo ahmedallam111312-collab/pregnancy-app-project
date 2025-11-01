@@ -1,6 +1,6 @@
 """
-ملف الدوال المشتركة (Helpers) - نسخة v31
-(تم إصلاح مشاكل عرض القائمة الجانبية والألوان في الموبايل)
+ملف الدوال المشتركة (Helpers) - نسخة v32
+(تم حذف القائمة الجانبية بالكامل وإصلاح الألوان)
 """
 
 import datetime
@@ -18,7 +18,7 @@ import json
 import uuid  # For generating unique record IDs
 import base64  # For SVG logo
 import platform  # For OS detection
-import sys # 💡 (مطلوب لدالة build_sidebar)
+# ❌ تم حذف استيراد sys
 
 # --- PDF Generation Modules ---
 FPDF_EXISTS = False
@@ -139,7 +139,7 @@ Placental Abruption,"نزيف مهbli داكن (قد يكون داخلياً ب�
 Cholestasis of Pregnancy,"**حكة شديدة** (خاصة في راحة اليدين وباطن القدمين) تزداد سوءاً في الليل، **بدون طفح جلدي**","Bile Acids, LFTs","Bile Acids < 10 μmol/L","حكة لا تحتمل، اصفرار الجلد (يرقان)، بول داكن، ارتفاع شديد في أحماض الصفراء (>40)","متابعة طبية قريبة، أدوية (Ursodiol) لتقليل الحكة والأحماض، مراقبة وظائف الكبد وحالة الجنين، قد تستدعي ولادة مبكرة (37-38 أسبوع)"
 DVT (Deep Vein Thrombosis),"تورم في ساق واحدة (عادة اليسرى)، ألم شديد بالساق، احمرار، سخونة في المنطقة المتورمة","Doppler Ultrasound (سونار دوبلر)","-","ألم شديد عند ثني القدم للأعلى (Homan's sign)، تاريخ مرضي بجلطات","**تقييم فوري**. راحة ورفع الساق، أدوية مسيلة للدم (مثل Enoxaparin) مناسبة للحمل، تجنب الجلوس لفترة طويلة"
 Peripartum Cardiomyopathy (PPCM),"ضيق تنفس عند الاستلقاء (orthopnea)، سعال ليلي، تورم شديد بالقدمين والساقين، خفقان، تعب شديد","Echo (موجات صوتية على القلب), BNP","BNP < 100 pg/mL (قد يرتفع قليلاً طبيعياً في الحمل)","ارتفاع BNP، انخفاض كفاءة عضلة القلب (EF) في الإيكو","**طوارئ قلب فورية**. راحة تامة، أدوية مدرة للبول وأدوية دعم القلب (ACEI/ARBs ممنوعة أثناء الحمل)، متابعة لصيقة مع طبيب قلب"
-Normal Pregnancy,"**غثيان صباحي خفيف (خاصة T1)**، تعب (T1/T3)، زيادة وزن طبيعية، حركة جنين طبيعية، آلام ظهر/حوض بسيطة","Routine Antenal Care","-","عدم وجود علامات خطر (نزيف، صداع شديد، انقباضات منتظمة، قلة حركة الجنين)","استمرار بالمتابعة، غذاء صحي، فيتامينات الحمل، نشاط بدني معتدل"
+Normal Pregnancy,"**غثيان صباحي خفيف (خاصة T1)**، تعب (T1/T3)، زيادة وزن طبيعية، حركة جنين طبيعية، آلام ظهر/حوض بسيطة","Routine Antenal Care","-","عدم وجود علامات خطر (نزيف، صداع شديد، انقباضات منتظمة، قلة حركة جنين)","استمرار بالمتابعة، غذاء صحي، فيتامينات الحمل، نشاط بدني معتدل"
 """
     return pd.read_csv(io.StringIO(csv_data))
 
@@ -539,16 +539,19 @@ def apply_global_styles():
     st.markdown("""
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-            body, .stApp, input, textarea, button, select, label, div[data-baseweb="select"] > div, .stDataFrame *, .stTable *, .stMarkdown p { 
+            
+            /* 💡💡 1. إصلاح الخط الأسود لجميع العناصر 💡💡 */
+            body, .stApp, input, textarea, button, select, label, div[data-baseweb="select"] > div, .stDataFrame *, .stTable *, .stMarkdown p, 
+            div[data-testid="stExpander"] div, [data-testid="stCheckbox"] label, [data-testid="stForm"] label, 
+            [data-testid="stRadio"] label, [data-testid="stSidebar"] span, [data-testid="stSidebar"] a { 
                 font-family: 'Cairo', sans-serif !important; 
                 direction: rtl; 
                 color: #000000 !important; /* **FIX**: Force BLACK text color */
             }
+            
             /* **PINKER THEME** & Mobile Responsive */
             .stApp { background: linear-gradient(135deg, #FFF0F5 0%, #FFE4E1 100%); } /* Softer Pink Gradient */
             
-            /* (تأكد أن هذا الـ class صحيح، قد يحتاج للتعديل) */
-            /* هذا يضمن أن الصفحات الفرعية لها خلفية بيضاء شفافة */
             .main > div { 
                 background-color: rgba(255, 255, 255, 0.95); 
                 padding: 2rem; 
@@ -557,7 +560,7 @@ def apply_global_styles():
                 border: 1px solid rgba(255, 255, 255, 0.3); 
             }
             
-            h1, h2, h3 { color: #D81B60 !important; font-weight: 700; } /* Main Title Pink */
+            h1, h2, h3 { color: #D81B60 !important; font-weight: 700; }
             h1 { text-align: center; margin-bottom: 2.5rem; }
             h3 { border-bottom: 2px solid #F8BBD0; padding-bottom: 0.6rem; margin-top: 2rem; margin-bottom: 1rem; display: flex; align-items: center;}
             h3::before { content: '⭐ '; margin-left: 10px; font-size: 1.1em; color: #FF69B4; }
@@ -568,8 +571,8 @@ def apply_global_styles():
             h3:contains("نتائج التحاليل")::before { content: '🔬 '; }
 
             .stButton>button { 
-                border-radius: 30px; border: none; color: white !important; /* Force white text on button */
-                background: linear-gradient(45deg, #FF69B4, #D81B60); /* Pink Gradient */
+                border-radius: 30px; border: none; color: white !important; 
+                background: linear-gradient(45deg, #FF69B4, #D81B60); 
                 padding: 15px 40px; font-size: 1.1em; font-weight: 700; 
                 box-shadow: 0 6px 20px rgba(216, 27, 96, 0.35); 
                 transition: all 0.3s ease; cursor: pointer; 
@@ -579,26 +582,26 @@ def apply_global_styles():
                 box-shadow: 0 10px 30px rgba(216, 27, 96, 0.45); 
             }
 
-            /* **DARK MODE FIX** */
+            /* **DARK MODE FIX (Inputs)** */
             .stTextInput input, .stNumberInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] > div { 
                 border-radius: 12px; border: 1px solid #F48FB1 !important;
                 box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); 
                 transition: all 0.2s ease-in-out; padding: 10px 12px;
-                background-color: #FFFFFF !important; /* Force white background */
-                color: #333333 !important; /* Force dark text */
+                background-color: #FFFFFF !important; 
+                color: #333333 !important; 
             }
             div[data-baseweb="popover"] li {
                 color: #333333 !important;
             }
 
             .stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus, .stSelectbox div[data-baseweb="select"] > div:focus-within { 
-                border-color: #D81B60 !important; /* Darker Pink Focus */
+                border-color: #D81B60 !important; 
                 box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.2) !important; 
                 transform: scale(1.01); 
             }
 
             .stDataFrame, .stTable { border-radius: 10px; overflow: hidden; border: 1px solid #F8BBD0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); color: #333333 !important;}
-            .stDataFrame *, .stTable * { color: #333333 !important; } /* Force dark text in tables */
+            .stDataFrame *, .stTable * { color: #333333 !important; } 
 
             .stSpinner > div { border-top-color: #D81B60 !important; border-left-color: #D81B60 !important; }
             .stMetric { background-color: #FCE4EC; padding: 1rem; border-radius: 15px; border: 1px solid #F8BBD0; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05);}
@@ -609,80 +612,30 @@ def apply_global_styles():
             .stContainer { border: 1px solid #F8BBD0; border-radius: 15px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255, 255, 255, 0.65);}
             .stAlert { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
             .stAlert [data-testid="stMarkdownContainer"] p { font-weight: bold; color: inherit !important; }
+            
+            /* --- 💡💡 (هذا هو الكود الجديد) 💡💡 --- */
+            
+            /* 1. إخفاء القائمة الجانبية بالكامل (للموبايل والكمبيوتر) */
+            [data-testid="stSidebar"] {
+                display: none;
+            }
 
-            /* **BLACK CHECKBOX FIX** */
-            [data-testid="stCheckbox"] label { color: #000000 !important; }
+            /* 2. إصلاح لون خطوط الراديو والتشيك بوكس */
+            [data-testid="stCheckbox"] label span, [data-testid="stRadio"] label span {
+                color: #000000 !important; /* أسود صريح */
+            }
 
-            /* Mobile Responsive Fixes */
-            @media (max-width: 768px) {
-                .main > div { padding: 1rem 1rem; } 
-                h1 { font-size: 1.6em; margin-bottom: 1.5rem; }
-                h3 { font-size: 1.15em; }
-                .stButton>button { padding: 12px 25px; font-size: 1em; }
-                .stMetric { padding: 0.5rem; }
-                .stMetric .st-ae { font-size: 1.5em; }
-                .stMetric label { font-size: 0.8em; }
+            /* 3. إصلاح مشكلة الهامش عند إخفاء القائمة */
+            /* (هذا يزيل الهامش الأيسر الذي يتركه Streamlit) */
+            .main .block-container {
+                padding-left: 1rem;
+                padding-right: 1rem;
             }
             
-            /* ستايل القائمة الجانبية الجديدة */
-            [data-testid="stSidebar"] { 
-                background: linear-gradient(180deg, #FFF0F5 0%, #FFE4E1 100%);
-                border-right: 1px solid #F8BBD0;
-            }
-            [data-testid="stSidebar"] .st-emotion-cache-16txtl3 { /* عنوان القائمة */
-                color: #D81B60 !important;
-                font-family: 'Cairo', sans-serif !important;
-                font-weight: 700;
-            }
-            
-            /* 💡💡 (تم تعديل هذا الجزء لإصلاح اللون الأبيض) 💡💡 */
-            [data-testid="stSidebar"] a { /* روابط الصفحات */
-                font-family: 'Cairo', sans-serif !important;
-                font-size: 1.05em;
-                color: #AD1457 !important; /* <-- اللون الأساسي (أغمق) */
-                border-radius: 10px;
-                transition: all 0.2s ease;
-            }
-            [data-testid="stSidebar"] a:hover {
-                background-color: #FCE4EC;
-                color: #880E4F !important; /* <-- لون عند المرور (أغمق) */
-            }
-            [data-testid="stSidebar"] a[aria-current="page"] { /* الصفحة الحالية */
-                background-color: #F48FB1;
-                color: #880E4F !important; /* <-- لون الصفحة النشطة (أغمق) */
-                font-weight: 700;
-            }
+            /* --- (نهاية الكود الجديد) --- */
+
         </style>
     """, unsafe_allow_html=True)
 
 
-# --- 💡💡 (تمت إضافة دالة القائمة الجانبية الموحدة) 💡💡 ---
-def build_sidebar():
-    """
-    تنشئ القائمة الجانبية المخصصة (العربية).
-    يجب استدعاؤها في بداية كل صفحة.
-    """
-    
-    # 💡 (الحل 1: تحديد اسم الملف الرئيسي ديناميكيًا)
-    # هذا الكود يحدد ما إذا كنا في الصفحة الرئيسية أم لا
-    try:
-        # 💡 (الحل 2: الاعتماد على الرمز '/' الرسمي)
-        main_page_path = "/" # <-- 💡💡💡 هذا هو المسار الصحيح للصفحة الرئيسية
-    except Exception as e:
-        print(f"Error getting main page path: {e}")
-        main_page_path = "/" # الاعتماد على الرمز الافتراضي
-
-
-    with st.sidebar:
-        st.image(SVG_DATA_URI, width=250)
-        st.title("مساعد الحمل الذكي")
-
-        # --- 💡💡 (تم تعديل المسار الرئيسي هنا) 💡💡 ---
-        st.page_link(main_page_path, label="🏠 القائمة الرئيسية", icon="🏠")
-        
-        # --- 💡💡 (تم إصلاح الخطأ الإملائي هنا) 💡💡 ---
-        st.page_link("pages/assessment_wizard.py", label="👩‍⚕️ التقييم الشامل", icon="👩‍⚕️")
-        st.page_link("pages/chatbot_page.py", label="💬 الدردشة الذكية", icon="💬")
-        st.page_link("pages/dashboard.py", label="📊 لوحة المتابعة", icon="📊")
-        st.page_link("pages/weekly_guide.py", label="📅 دليل الحمل الأسبوعي", icon="📅")
-        st.page_link("pages/fmc_counter.py", label="👣 عداد حركة الجنين", icon="👣")
+# --- ❌❌ (تم حذف دالة build_sidebar بالكامل) ❌❌ ---
